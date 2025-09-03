@@ -1,7 +1,7 @@
 
 __pycache__/
 data/
-
+questionstoask.txt
 # do not track changes in intermediate files
 .DS_Store
 *.csv
