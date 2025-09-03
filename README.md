@@ -1,0 +1,62 @@
+# Extended Stochastic Block Models for Recommender Systems
+
+Code for my Matser's thesis extending **Extended Stochastic Block Model** (Legramanti et al. 2020) to recommender systems.  for recommendser systems.
+
+---
+## Project Description
+
+This repository contains the code and analysis for my Master’s thesis, which explores **Extended Stochastic Block Models (ESBMs)** and their application to **recommender systems**. A stochastic block model (SBM) is a generative statistical model for networks, often used to cluster nodes into communities based on their connection patterns. Extended Stochastic Block Models (ESBMs) are a Bayesian nonparametric version of SBMs.
+
+The project extends this version of SBMs to **weighted, bipartite networks** and introduces a **degree-corrected extension** to capture user/item popularity heterogeneity while leveraging nonparametric Bayesian modeling for community detection.
+
+The codebase serves two main purposes:
+1. **Simulation Studies:** Scripts to reproduce the synthetic experiments in the thesis, demonstrating the performance of ESBMs under different network settings.
+2. **Goodreads Book Ratings Analysis:** An empirical study applying ESBM and its degree-corrected variant to a large-scale **Goodreads dataset** of book ratings.
+
+### Data
+The dataset is not stored in this repository due to its size. However:
+- A **script is provided** to preprocess and build the dataset from the raw files.
+- The raw Goodreads ratings data can be downloaded from [link to dataset].
+- Preprocessing includes filtering, network construction, and transformation into the bipartite graph structure used in this study.
+
+### Key Features
+- Bayesian nonparametric modeling of bipartite user-item networks.
+- Integration of **Gibbs-type priors** for flexible cluster assignment.
+- **Degree-correction** to model heterogeneity in user activity and item popularity.
+- Implementation of **MCMC algorithms** for posterior inference.
+- Tools for rating prediction, community structure estimation, and recommendation generation.
+
+This repository provides a **fully reproducible workflow** for both simulation experiments and real-world analysis.
+
+### So... why does this matter? 
+Recommendation algorithms decide what we watch, read, or buy but they are often black boxes. This project aims to develop an interpretable algorithm modeling user-item interactions as networks. Instead of blindly factorizing a ratings matrix, we discover communities of similar users and items, making recommendations easier to interpret and explain. Plus, with degree correction, we don’t get fooled by power-users or ultra-popular items, your “hidden gem” recommendations stay hidden gems.
+
+---
+
+## 📂 Repository Structure
+
+```text
+├── data/               # Raw and processed datasets
+├── results/            # Generated figures and tables
+├── src/                # Analysis and pipeline scripts
+│   ├── analysis/       # Modeling and statistical methods
+│   └── pipeline/       # Data loading and preprocessing
+└── README.md           # This file
+```
+---
+
+## Installation
+Clone the repository and install requirements:
+```bash
+git clone https://github.com/yourusername/repo-name.git
+cd repo-name
+pip install -r requirements.txt
+```
+
+---
+
+## Usage
+1. Preprocess the data:
+```bash
+python src/pipeline/pre_processing_functs.py
+``` 

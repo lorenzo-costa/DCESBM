@@ -1,3 +1,0 @@
-
-- how to point to raw data correctly (cannot upload them to github)
-- same vein, how to keep track of processed data (cannot upload them to github)
