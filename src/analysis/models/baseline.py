@@ -132,9 +132,9 @@ class Baseline:
             raise Exception('please provide scheme type')        
         
         if scheme_type == 'DM':
-            if not isinstance(bar_h_users, int) or (bar_h_users < 0) or (bar_h_users > num_users):
+            if not isinstance(bar_h_users, int) or (bar_h_users <= 0) or (bar_h_users > num_users):
                 raise Exception('provide valid maximum number of clusters users for DM)')
-            if not isinstance(bar_h_items, int) or (bar_h_items < 0) or (bar_h_items>num_items):
+            if not isinstance(bar_h_items, int) or (bar_h_items <= 0) or (bar_h_items>num_items):
                 raise Exception('provide valid maximum number of clusters items for DM)')
             if not isinstance(sigma, (int, float)) or sigma >= 0:
                 raise Exception('provide valid sigma (-item_clustering) parameter for DM')
@@ -145,7 +145,7 @@ class Baseline:
         
         if scheme_type == 'PY':
             if not isinstance(sigma, (int, float)) or (sigma < 0 or sigma >= 1):
-                raise Exception('provide valid sigma in [0, 1) for PY')
+                raise Exception('provide sigma in [0, 1) for PY')
             if not isinstance(scheme_param, (int, float)) or scheme_param <= -sigma:
                 raise Exception('provide valid user_clustering parameter for PY')
             if sigma == 0:
