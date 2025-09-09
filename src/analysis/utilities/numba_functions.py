@@ -157,6 +157,7 @@ def sampling_scheme(V, H, frequencies, bar_h, scheme_type, scheme_param, sigma, 
         for i in range(len(frequencies)):
             probs[i] = (frequencies[i]+1)*(V-H+gamma)
         probs[-1] = H*(H-gamma)
+    
     return probs
 
 
