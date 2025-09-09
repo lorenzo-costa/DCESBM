@@ -1,5 +1,8 @@
 import pytest
-from src.analysis.models.baseline import Baseline
+import sys
+
+sys.path.append("src/analysis")
+from models.baseline import Baseline
 
 
 class TestInitMethod:
