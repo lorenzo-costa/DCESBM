@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 from src.analysis.models.baseline import Baseline
 
 
