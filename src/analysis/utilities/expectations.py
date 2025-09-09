@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.special import gammaln, comb
+from scipy.special import gammaln
 
 def expected_cl_py(n, sigma, theta, H):
     n = int(n)

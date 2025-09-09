@@ -1,8 +1,7 @@
-from esbm_rec import esbm
+from models.esbm_rec import esbm
 import numpy as np
-from analysis.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
+from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
 import time
-from math import lgamma
 
 class dcesbm(esbm):
     """Degree-Corrected Exteneded Stochastic Block Model
@@ -436,7 +435,7 @@ class dcesbm(esbm):
         self.frequencies_items = frequencies_items
         return
     
-    def gibbs_train(self, n_iters, verbose=0, warm_start=False, degree_corrected=True):
+    def gibbs_train(self, n_iters, verbose=0, degree_corrected=True):
         np.random.seed(self.seed)
         
         self.n_iters = n_iters
@@ -460,24 +459,21 @@ class dcesbm(esbm):
         
         print('starting log likelihood', ll)
         
-        if warm_start is True:
-            raise Exception('implement this')
-        else:
-            llks = np.zeros(n_iters+1)
-            user_cluster_list = np.zeros((n_iters+1, self.num_users), dtype=np.int32)
-            item_cluster_list = np.zeros((n_iters+1, self.num_items), dtype=np.int32)
-            frequencies_users_list = []
-            frequencies_items_list = []
-            degree_users_list = []
-            degree_items_list = []
-            
-            llks[0] = ll
-            user_cluster_list[0] = self.user_clustering.copy()
-            item_cluster_list[0] = self.item_clustering.copy()
-            frequencies_users_list.append(self.frequencies_users.copy())
-            frequencies_items_list.append(self.frequencies_items.copy())
-            degree_users_list.append(self.degree_users)
-            degree_items_list.append(self.degree_items)
+        llks = np.zeros(n_iters+1)
+        user_cluster_list = np.zeros((n_iters+1, self.num_users), dtype=np.int32)
+        item_cluster_list = np.zeros((n_iters+1, self.num_items), dtype=np.int32)
+        frequencies_users_list = []
+        frequencies_items_list = []
+        degree_users_list = []
+        degree_items_list = []
+        
+        llks[0] = ll
+        user_cluster_list[0] = self.user_clustering.copy()
+        item_cluster_list[0] = self.item_clustering.copy()
+        frequencies_users_list.append(self.frequencies_users.copy())
+        frequencies_items_list.append(self.frequencies_items.copy())
+        degree_users_list.append(self.degree_users)
+        degree_items_list.append(self.degree_items)
         
         check = time.time()
         for it in range(n_iters):

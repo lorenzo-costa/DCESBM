@@ -1,8 +1,6 @@
-from baseline import Baseline
+from models.baseline import Baseline
 import numpy as np
-from math import lgamma
-
-from analysis.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov
+from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov
 
 
 class esbm(Baseline):
@@ -115,9 +113,7 @@ class esbm(Baseline):
         
     
     def gibbs_step(self):
-        """Performs a single Gibbs sampling step.
-        
-        """
+        """Performs a single Gibbs sampling step"""
         
         frequencies_users = self.frequencies_users
         frequencies_items = self.frequencies_items         

@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from aux_functions import plot_heatmap
-from esbm_rec import esbm
-from dc_esbm_rec import dcesbm
-from valid_functs import multiple_runs
+from utilities.misc_functs import plot_heatmap
+from models.esbm_rec import esbm
+from models.dc_esbm_rec import dcesbm
+from utilities.valid_functs import multiple_runs
 import yaml
+
+# load and and set config
 
 with open("src/analysis/config_sim.yaml", "r") as f:
     config = yaml.safe_load(f)
@@ -41,6 +43,7 @@ params_list = [params_dp, params_py, params_gn, params_dp_cov, params_py_cov, pa
 model_names = ['dc_DP', 'dc_PY', 'dc_GN', 'dc_DP_cov', 'dc_PY_cov', 'dc_GN_cov',
                'esbm_DP', 'esbm_PY', 'esbm_GN', 'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
 
+# run simulations 
 out = multiple_runs(true_mod=dcesbm, 
                     params_init=params_init, 
                     num_users=n_users, 
@@ -61,6 +64,7 @@ out = multiple_runs(true_mod=dcesbm,
                     thinning=thinning, 
                     seed=seed) 
 
+# extract and save results
 names_list, mse_list, mae_list, precision_list, recall_list, vi_users_list, vi_items_list, models_list_out = out
 
 dc_mean_dp_mse = np.mean(mse_list[0::12])
@@ -174,6 +178,8 @@ output_table['VI_items'] = [dc_mean_dp_vi_items, dc_mean_py_vi_items, dc_mean_gn
 output_table.to_csv('results/tables/results_simulations.csv', index=False)
 
 
+# extract and save llk plots
+
 model_dp_dc = models_list_out[0]
 model_py_dc = models_list_out[1]
 model_gn_dc = models_list_out[2]
@@ -200,8 +206,12 @@ llk_dp_esbm_cov = model_dp_cov_esbm.train_llk
 llk_py_esbm_cov = model_py_cov_esbm.train_llk
 llk_gn_esbm_cov = model_gn_cov_esbm.train_llk
 
-plot_heatmap(model_dp_dc, save_path='results/figures/simulations/heatmap_dp_dc_users.png')
+plot_heatmap(model_dp_dc, save_path='results/figures/simulations/heatmap_dp_dc.png')
+plot_heatmap(model_dp_cov_dc, save_path='results/figures/simulations/heatmap_dp_cov_dc.png')
+plot_heatmap(model_dp_esbm, save_path='results/figures/simulations/heatmap_dp_esbm.png')
+plot_heatmap(model_dp_cov_esbm, save_path='results/figures/simulations/heatmap_dp_cov_esbm.png')
 
+# plot by group type
 groups = [
     {'data': [llk_dp_dc, llk_py_dc, llk_gn_dc], 
      'labels': ['DP', 'PY', 'GN'],

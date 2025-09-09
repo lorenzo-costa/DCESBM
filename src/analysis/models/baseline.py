@@ -1,11 +1,9 @@
 import numpy as np
-import math
 from scipy import sparse
 from scipy.stats import mode
 
-from analysis.numba_functions import sampling_scheme, compute_log_probs_cov, compute_log_likelihood
-from vi_functs import minVI
-from analysis.numba_functions import compute_co_clustering_matrix
+from utilities.numba_functions import sampling_scheme, compute_log_probs_cov, compute_log_likelihood, compute_co_clustering_matrix
+from utilities.vi_functs import minVI
 
 
 #########################################

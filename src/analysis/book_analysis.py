@@ -1,24 +1,19 @@
 
-import numpy as np
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from aux_functions import plot_heatmap
-from esbm_rec import esbm
-from dc_esbm_rec import dcesbm
-from baseline import Baseline
-from analysis.numba_functions import compute_log_likelihood
-from valid_functs import validate_models, generate_val_set, multiple_runs
+from models.esbm_rec import esbm
+from models.dc_esbm_rec import dcesbm
+from utilities.valid_functs import validate_models, generate_val_set
 import seaborn as sns
-from expectations import expected_cl_py, HGnedin
 import yaml
 
 ###########################
-# loading stuff
-# Load dataset
+# load dataset
 dataset_clean = pd.read_csv('data/processed/dataset_clean.csv')
 
-# Load settings
+# load settings
 with open("src/analysis/config_books.yaml", "r") as f:
     config = yaml.safe_load(f)
     
@@ -169,7 +164,7 @@ plt.tight_layout()
 plt.savefig('results/figures/books/llk_dcesbm_cov.png')
 
 ######################################
-# extract val metrics
+# extract and save val metrics
 ########################################
 mae_esbm_dp = esbm_dp.mae
 mse_esbm_dp = esbm_dp.mse
