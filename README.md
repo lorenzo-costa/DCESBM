@@ -39,18 +39,19 @@ Recommendation algorithms decide what we watch, read, or buy but they are often 
 
 ## Installation
 Clone the repository and install requirements:
+
 (pip)
 ```bash
-git clone https://github.com/lorenzo-costa/REC-ESBM.git
-cd REC-ESBM
+git clone https://github.com/lorenzo-costa/DCESBM.git
+cd DCESBM
 pip install -r requirements.txt
 ```
 (conda)
 ```bash
-git clone https://github.com/lorenzo-costa/REC-ESBM.git
-cd repo-name
+git clone https://github.com/lorenzo-costa/DCESBM.git
+cd DCESBM
 conda env create -f environment.yml
-conda activate REC-ESBM
+conda activate DCESBM
 ```
 
 ---
@@ -69,7 +70,7 @@ Alternatively you can dowload the data from [here](https://drive.google.com/file
 
 2. Run simulations
 ```bash
-python src/analysis/simulations.py\
+python src/analysis/simulations.py
 ```
 3. Run data analysis:
 ```bash
