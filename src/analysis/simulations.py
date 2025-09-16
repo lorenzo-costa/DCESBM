@@ -1,21 +1,20 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from utilities.misc_functs import plot_heatmap
+from utilities.plotting_functions import plot_heatmap
 from models.esbm_rec import esbm
 from models.dc_esbm_rec import dcesbm
 from utilities.valid_functs import multiple_runs
 import yaml
 
-# load and and set config
-
+# load and and set parameters
 with open("src/analysis/config_sim.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 n_users = config["general_params"]["num_users"]
 n_items = config["general_params"]["num_items"]
-n_cl_u = config["general_params"]["bar_h_users"]
-n_cl_i = config["general_params"]["bar_h_items"]
+num_clusters_users = config["general_params"]["bar_h_users"]
+num_clusters_items = config["general_params"]["bar_h_items"]
 n_iters = config["run_settings"]["num_iters"]
 burn_in = config["run_settings"]["burn_in"]
 thinning = config["run_settings"]["thinning"]
@@ -37,19 +36,23 @@ cov_places_items = [3,4,5]
 
 model_list = [dcesbm, dcesbm, dcesbm, dcesbm, dcesbm, dcesbm, 
               esbm, esbm, esbm, esbm, esbm, esbm]
-params_list = [params_dp, params_py, params_gn, params_dp_cov, params_py_cov, params_gn_cov,
-               params_dp, params_py, params_gn, params_dp_cov, params_py_cov, params_gn_cov]
+params_list = [params_dp, params_py, params_gn, 
+               params_dp_cov, params_py_cov, params_gn_cov,
+               params_dp, params_py, params_gn, 
+               params_dp_cov, params_py_cov, params_gn_cov]
 
-model_names = ['dc_DP', 'dc_PY', 'dc_GN', 'dc_DP_cov', 'dc_PY_cov', 'dc_GN_cov',
-               'esbm_DP', 'esbm_PY', 'esbm_GN', 'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
+model_names = ['dc_DP', 'dc_PY', 'dc_GN', 
+               'dc_DP_cov', 'dc_PY_cov', 'dc_GN_cov',
+               'esbm_DP', 'esbm_PY', 'esbm_GN', 
+               'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
 
 # run simulations 
 out = multiple_runs(true_mod=dcesbm, 
                     params_init=params_init, 
                     num_users=n_users, 
                     num_items=n_items, 
-                    n_cl_u=n_cl_u, 
-                    n_cl_i=n_cl_i, 
+                    num_cluster_users=num_clusters_users, 
+                    num_clusters_items=num_clusters_items, 
                     n_runs=n_runs, 
                     n_iters=n_iters,
                     params_list=params_list, 
@@ -65,7 +68,14 @@ out = multiple_runs(true_mod=dcesbm,
                     seed=seed) 
 
 # extract and save results
-names_list, mse_list, mae_list, precision_list, recall_list, vi_users_list, vi_items_list, models_list_out = out
+names_list=out[0]
+mse_list=out[1]
+mae_list=out[2]
+precision_list=out[3]
+recall_list=out[4]
+vi_users_list=out[5]
+vi_items_list=out[6]
+models_list_out=out[7]
 
 dc_mean_dp_mse = np.mean(mse_list[0::12])
 dc_mean_py_mse = np.mean(mse_list[1::12])
@@ -152,27 +162,43 @@ esbm_mean_py_cov_vi_items = np.mean(vi_items_list[10::12])
 esbm_mean_gn_cov_vi_items = np.mean(vi_items_list[11::12])
 
 
+# make output table
 output_table = pd.DataFrame()
 
-output_table['Model'] = ['dc_DP', 'dc_PY', 'dc_GN', 'dc_DP_cov', 'dc_PY_cov', 'dc_GN_cov',
-                         'esbm_DP', 'esbm_PY', 'esbm_GN', 'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
-output_table['MAE'] = [dc_mean_dp_mae, dc_mean_py_mae, dc_mean_gn_mae, dc_mean_dp_cov_mae, dc_mean_py_cov_mae, dc_mean_gn_cov_mae,
-                       esbm_mean_dp_mae, esbm_mean_py_mae, esbm_mean_gn_mae, esbm_mean_dp_cov_mae, esbm_mean_py_cov_mae, esbm_mean_gn_cov_mae]
+output_table['Model'] = ['dc_DP', 'dc_PY', 'dc_GN', 
+                         'dc_DP_cov', 'dc_PY_cov', 'dc_GN_cov',
+                         'esbm_DP', 'esbm_PY', 'esbm_GN', 
+                         'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
 
-output_table['MSE'] = [dc_mean_dp_mse, dc_mean_py_mse, dc_mean_gn_mse, dc_mean_dp_cov_mse, dc_mean_py_cov_mse, dc_mean_gn_cov_mse,
-                       esbm_mean_dp_mse, esbm_mean_py_mse, esbm_mean_gn_mse, esbm_mean_dp_cov_mse, esbm_mean_py_cov_mse, esbm_mean_gn_cov_mse]
+output_table['MAE'] = [dc_mean_dp_mae, dc_mean_py_mae, dc_mean_gn_mae, 
+                       dc_mean_dp_cov_mae, dc_mean_py_cov_mae, dc_mean_gn_cov_mae,
+                       esbm_mean_dp_mae, esbm_mean_py_mae, esbm_mean_gn_mae, 
+                       esbm_mean_dp_cov_mae, esbm_mean_py_cov_mae, esbm_mean_gn_cov_mae]
 
-output_table['Precision'] = [dc_mean_dp_prec, dc_mean_py_prec, dc_mean_gn_prec, dc_mean_dp_cov_prec, dc_mean_py_cov_prec, dc_mean_gn_cov_prec,
-                             esbm_mean_dp_prec, esbm_mean_py_prec, esbm_mean_gn_prec, esbm_mean_dp_cov_prec, esbm_mean_py_cov_prec, esbm_mean_gn_cov_prec]
+output_table['MSE'] = [dc_mean_dp_mse, dc_mean_py_mse, dc_mean_gn_mse, 
+                       dc_mean_dp_cov_mse, dc_mean_py_cov_mse, dc_mean_gn_cov_mse,
+                       esbm_mean_dp_mse, esbm_mean_py_mse, esbm_mean_gn_mse, 
+                       esbm_mean_dp_cov_mse, esbm_mean_py_cov_mse, esbm_mean_gn_cov_mse]
 
-output_table['Recall'] = [dc_mean_dp_rec, dc_mean_py_rec, dc_mean_gn_rec, dc_mean_dp_cov_rec, dc_mean_py_cov_rec, dc_mean_gn_cov_rec,
-                          esbm_mean_dp_rec, esbm_mean_py_rec, esbm_mean_gn_rec, esbm_mean_dp_cov_rec, esbm_mean_py_cov_rec, esbm_mean_gn_cov_rec]
+output_table['Precision'] = [dc_mean_dp_prec, dc_mean_py_prec, dc_mean_gn_prec, 
+                             dc_mean_dp_cov_prec, dc_mean_py_cov_prec, dc_mean_gn_cov_prec,
+                             esbm_mean_dp_prec, esbm_mean_py_prec, esbm_mean_gn_prec, 
+                             esbm_mean_dp_cov_prec, esbm_mean_py_cov_prec, esbm_mean_gn_cov_prec]
 
-output_table['VI_users'] = [dc_mean_dp_vi_users, dc_mean_py_vi_users, dc_mean_gn_vi_users, dc_mean_dp_cov_vi_users, dc_mean_py_cov_vi_users, dc_mean_gn_cov_vi_users,
-                           esbm_mean_dp_vi_users, esbm_mean_py_vi_users, esbm_mean_gn_vi_users, esbm_mean_dp_cov_vi_users, esbm_mean_py_cov_vi_users, esbm_mean_gn_cov_vi_users]
+output_table['Recall'] = [dc_mean_dp_rec, dc_mean_py_rec, dc_mean_gn_rec, 
+                          dc_mean_dp_cov_rec, dc_mean_py_cov_rec, dc_mean_gn_cov_rec,
+                          esbm_mean_dp_rec, esbm_mean_py_rec, esbm_mean_gn_rec, 
+                          esbm_mean_dp_cov_rec, esbm_mean_py_cov_rec, esbm_mean_gn_cov_rec]
 
-output_table['VI_items'] = [dc_mean_dp_vi_items, dc_mean_py_vi_items, dc_mean_gn_vi_items, dc_mean_dp_cov_vi_items, dc_mean_py_cov_vi_items, dc_mean_gn_cov_vi_items,
-                           esbm_mean_dp_vi_items, esbm_mean_py_vi_items, esbm_mean_gn_vi_items, esbm_mean_dp_cov_vi_items, esbm_mean_py_cov_vi_items, esbm_mean_gn_cov_vi_items]
+output_table['VI_users'] = [dc_mean_dp_vi_users, dc_mean_py_vi_users, dc_mean_gn_vi_users, 
+                            dc_mean_dp_cov_vi_users, dc_mean_py_cov_vi_users, dc_mean_gn_cov_vi_users,
+                            esbm_mean_dp_vi_users, esbm_mean_py_vi_users, esbm_mean_gn_vi_users, 
+                            esbm_mean_dp_cov_vi_users, esbm_mean_py_cov_vi_users, esbm_mean_gn_cov_vi_users]
+
+output_table['VI_items'] = [dc_mean_dp_vi_items, dc_mean_py_vi_items, dc_mean_gn_vi_items, 
+                            dc_mean_dp_cov_vi_items, dc_mean_py_cov_vi_items, dc_mean_gn_cov_vi_items,
+                            esbm_mean_dp_vi_items, esbm_mean_py_vi_items, esbm_mean_gn_vi_items, 
+                            esbm_mean_dp_cov_vi_items, esbm_mean_py_cov_vi_items, esbm_mean_gn_cov_vi_items]
 
 
 output_table.to_csv('results/tables/results_simulations.csv', index=False)

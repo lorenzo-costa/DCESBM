@@ -1,9 +1,9 @@
-from models.esbm_rec import esbm
+from models.baseline import Baseline
 import numpy as np
 from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
 import time
 
-class dcesbm(esbm):
+class dcesbm(Baseline):
     """Degree-Corrected Exteneded Stochastic Block Model
     
     Degree corrected version of the bipartite Extended Stochastic Block Model (ESBM) 
@@ -63,9 +63,9 @@ class dcesbm(esbm):
         number of items
     num_users : int
         number of users
-    n_clusters_users : int
+    num_clusters_users : int
         number of clusters in the users
-    n_clusters_items : int
+    num_clusters_items : int
         number of clusters in the items
     train_llk : 1D array 
         log-likelihood values during training
@@ -120,11 +120,11 @@ class dcesbm(esbm):
         
         self.degree_cluster_users = self.compute_degree(clustering=self.user_clustering, 
                                                         degrees=self.degree_users, 
-                                                        n_clusters=self.n_clusters_users)
+                                                        n_clusters=self.num_clusters_users)
         
         self.degree_cluster_items = self.compute_degree(clustering=self.item_clustering, 
                                                         degrees=self.degree_items, 
-                                                        n_clusters=self.n_clusters_items)
+                                                        n_clusters=self.num_clusters_items)
     
     ########
     # function to compute cluster degree
@@ -139,14 +139,14 @@ class dcesbm(esbm):
     def generate_data(self):
         np.random.seed(self.seed)
         
-        phi_u = np.zeros(shape=(self.n_clusters_users, self.num_users))
-        for h in range(self.n_clusters_users):
+        phi_u = np.zeros(shape=(self.num_clusters_users, self.num_users))
+        for h in range(self.num_clusters_users):
             idx = np.where(self.user_clustering == h)[0]
             param = np.ones(len(idx)) * self.degree_param_users
             phi_u[h, idx] = np.random.dirichlet(param)
         
-        phi_i = np.zeros(shape=(self.n_clusters_items, self.num_items))
-        for k in range(self.n_clusters_items):
+        phi_i = np.zeros(shape=(self.num_clusters_items, self.num_items))
+        for k in range(self.num_clusters_items):
             idx = np.where(self.item_clustering == k)[0]
             param = np.ones(len(idx)) * self.degree_param_items
             phi_i[k, idx] = np.random.dirichlet(param)
@@ -182,7 +182,7 @@ class dcesbm(esbm):
         mhk = self.compute_mhk()
         yuk = self.compute_yuk()
 
-        H = self.n_clusters_users
+        H = self.num_clusters_users
         V = self.num_users
         
         nch = self.cov_nch_users
@@ -313,13 +313,13 @@ class dcesbm(esbm):
         
         self.degree_cluster_users = degree_cluster_users
         self.cov_nch_users = nch
-        self.n_clusters_users = H
+        self.num_clusters_users = H
         self.frequencies_users = frequencies_users
 
         ################################################
         # step for items
         ################################################
-        K = self.n_clusters_items
+        K = self.num_clusters_items
         V = self.num_items
 
         yih = self.compute_yih()
@@ -431,7 +431,7 @@ class dcesbm(esbm):
         
         self.degree_cluster_items = degree_cluster_items
         self.cov_nch_items = nch
-        self.n_clusters_items = K
+        self.num_clusters_items = K
         self.frequencies_items = frequencies_items
         return
     
@@ -530,14 +530,14 @@ class dcesbm(esbm):
         return llks, user_cluster_list, item_cluster_list
     
     def estimate_phi(self):
-        phi_users = np.zeros(shape=(self.n_clusters_users, self.num_users))
-        for h in range(self.n_clusters_users):
+        phi_users = np.zeros(shape=(self.num_clusters_users, self.num_users))
+        for h in range(self.num_clusters_users):
             idx = np.where(self.user_clustering==h)
             temp = self.degree_users[idx] + self.degree_param_users
             phi_users[h, idx] = temp/temp.sum()
         
-        phi_items = np.zeros(shape=(self.n_clusters_items, self.num_items))
-        for k in range(self.n_clusters_items):
+        phi_items = np.zeros(shape=(self.num_clusters_items, self.num_items))
+        for k in range(self.num_clusters_items):
             idx = np.where(self.item_clustering==k)
             temp = self.degree_items[idx] + self.degree_param_items
             phi_items[k, idx] = temp/temp.sum()

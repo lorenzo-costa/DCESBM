@@ -2,7 +2,8 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import mode
 
-from utilities.numba_functions import sampling_scheme, compute_log_probs_cov, compute_log_likelihood, compute_co_clustering_matrix
+from utilities.numba_functions import sampling_scheme, compute_log_probs_cov, compute_log_likelihood
+from utilities.misc_functs import compute_co_clustering_matrix
 from utilities.vi_functs import minVI
 
 
@@ -70,9 +71,9 @@ class Baseline:
         number of items
     num_users : int
         number of users
-    n_clusters_users : int
+    num_clusters_users : int
         number of clusters in the users
-    n_clusters_items : int
+    num_clusters_items : int
         number of clusters in the items
     train_llk : 1D array 
         log-likelihood values during training
@@ -197,7 +198,7 @@ class Baseline:
         if cov_items is not None:
             self.cov_names_items, self.cov_types_items, self.cov_values_items = self.process_cov(cov_items)
         
-        # clustering structure not provided create it
+        # if clustering structure not provided create it
         if user_clustering is None:
                 self.user_clustering = [i for i in range(self.num_users)]    
         elif user_clustering == 'random':
@@ -217,15 +218,15 @@ class Baseline:
         
         # theta not provided generate it
         if self.theta is None:
-            self.theta = np.random.gamma(1,1, size = (self.n_clusters_users, self.n_clusters_items))
+            self.theta = np.random.gamma(1,1, size = (self.num_clusters_users, self.num_clusters_items))
         
         # if there are covs compute nch
         if cov_users is not None:
-            self.cov_nch_users = self.compute_nch(self.cov_values_users, self.user_clustering, self.n_clusters_users)
+            self.cov_nch_users = self.compute_nch(self.cov_values_users, self.user_clustering, self.num_clusters_users)
         else:
             self.cov_nch_users = None
         if cov_items is not None:
-            self.cov_nch_items = self.compute_nch(self.cov_values_items, self.item_clustering, self.n_clusters_items)
+            self.cov_nch_items = self.compute_nch(self.cov_values_items, self.item_clustering, self.num_clusters_items)
         else:
             self.cov_nch_items = None
             
@@ -250,12 +251,12 @@ class Baseline:
         
         occupied_clusters_users, frequencies_users = np.unique(user_clustering, return_counts=True)
         self.frequencies_users = frequencies_users
-        self.n_clusters_users = len(occupied_clusters_users)
+        self.num_clusters_users = len(occupied_clusters_users)
         self.user_clustering = np.array(user_clustering)   
                     
         occupied_clusters_items, frequencies_items = np.unique(item_clustering, return_counts=True)
         self.frequencies_items = frequencies_items
-        self.n_clusters_items = len(occupied_clusters_items)
+        self.num_clusters_items = len(occupied_clusters_items)
         self.item_clustering = np.array(item_clustering)
     
     
@@ -317,10 +318,10 @@ class Baseline:
                     log_probs_cov = compute_log_probs_cov(probs, u, self.cov_types_users, nch_users, self.cov_values_users, 
                                                     users_frequencies, self.alpha_c, self.alpha_0)
                 
-                # convert back using exp and normalise
+                # convert back using exp and normalise. max trick used for numerical stability
                 log_probs = np.log(probs+self.epsilon)+log_probs_cov
                 probs = np.exp(log_probs-max(log_probs))
-                probs /= probs.sum()
+                probs = probs/probs.sum()
                 
                 assignment = np.random.choice(len(probs), p=probs)
                 if assignment >= H:
@@ -345,11 +346,11 @@ class Baseline:
                 user_clustering.append(assignment)
                 V += 1
 
-            self.n_clusters_users = H
+            self.num_clusters_users = H
             self.frequencies_users = users_frequencies
             
             self.user_clustering = np.array(user_clustering)    
-            self.n_clusters_users = len(np.unique(user_clustering))
+            self.num_clusters_users = len(np.unique(user_clustering))
         
         if item_clustering == 'random':
             item_clustering = [0]
@@ -404,11 +405,11 @@ class Baseline:
                 item_clustering.append(assignment)
                 V += 1
                 
-                self.n_clusters_items = K
+                self.num_clusters_items = K
                 self.frequencies_items = items_frequencies
             
             self.item_clustering = np.array(item_clustering)
-            self.n_clusters_items = len(np.unique(item_clustering))
+            self.num_clusters_items = len(np.unique(item_clustering))
         
         return user_clustering, item_clustering
     
@@ -431,30 +432,30 @@ class Baseline:
         if user_clustering is None:
             user_clustering = self.user_clustering
             num_users = self.num_users
-            n_clusters_users = self.n_clusters_users
+            num_clusters_users = self.num_clusters_users
         else:
             num_users = len(user_clustering)
-            n_clusters_users = len(np.unique(user_clustering))
+            num_clusters_users = len(np.unique(user_clustering))
             
         if item_clustering is None:
             item_clustering = self.item_clustering
             num_items = self.num_items
-            n_clusters_items = self.n_clusters_items
+            num_clusters_items = self.num_clusters_items
         else:
             num_items = len(item_clustering)
-            n_clusters_items = len(np.unique(item_clustering))
+            num_clusters_items = len(np.unique(item_clustering))
         
         user_clusters = sparse.csr_matrix(
             (np.ones(num_users),
             (range(num_users),
             user_clustering)),
-            shape=(num_users, n_clusters_users))
+            shape=(num_users, num_clusters_users))
 
         item_clusters = sparse.csr_matrix(
             (np.ones(num_items),
             (range(num_items),
             item_clustering)),
-            shape=(num_items, n_clusters_items))
+            shape=(num_items, num_clusters_items))
 
         mhk = user_clusters.T @ self.Y @ item_clusters
         return mhk
@@ -471,7 +472,7 @@ class Baseline:
             (np.ones(self.num_items),
             (range(self.num_items),
             self.item_clustering)),
-            shape=(self.num_items, self.n_clusters_items))
+            shape=(self.num_items, self.num_clusters_items))
         
         yuk = self.Y @ item_clusters
         return yuk
@@ -488,7 +489,7 @@ class Baseline:
             (np.ones(self.num_users),
             (range(self.num_users),
             self.user_clustering)),
-            shape=(self.num_users, self.n_clusters_users))
+            shape=(self.num_users, self.num_clusters_users))
 
         yih = self.Y.T @ user_clusters
         return yih
@@ -582,8 +583,8 @@ class Baseline:
                                         item_clustering=self.item_clustering,
                                         dg_u=np.zeros(self.num_users), 
                                         dg_i=np.zeros(self.num_items), 
-                                        dg_cl_i=np.zeros(self.n_clusters_items), 
-                                        dg_cl_u=np.zeros(self.n_clusters_users),
+                                        dg_cl_i=np.zeros(self.num_clusters_items), 
+                                        dg_cl_u=np.zeros(self.num_clusters_users),
                                         degree_corrected=False)
         
         print('starting log likelihood', ll)
@@ -608,8 +609,8 @@ class Baseline:
                                         item_clustering=self.item_clustering,
                                         dg_u=np.zeros(self.num_users), 
                                         dg_i=np.zeros(self.num_items), 
-                                        dg_cl_i=np.zeros(self.n_clusters_items), 
-                                        dg_cl_u=np.zeros(self.n_clusters_users), 
+                                        dg_cl_i=np.zeros(self.num_clusters_items), 
+                                        dg_cl_u=np.zeros(self.num_clusters_users), 
                                         degree_corrected=False)
             llks[it+1] += ll
             user_cluster_list[it+1] += self.user_clustering
@@ -736,12 +737,12 @@ class Baseline:
         self.user_clustering[:] = est_cluster_users
         unique_users, frequencies_users = np.unique(est_cluster_users, return_counts=True)
         self.frequencies_users = frequencies_users
-        self.n_clusters_users = len(unique_users)
+        self.num_clusters_users = len(unique_users)
         
         self.item_clustering[:] = est_cluster_items
         unique_items, frequencies_items = np.unique(est_cluster_items, return_counts=True)
         self.frequencies_items = frequencies_items
-        self.n_clusters_items = len(unique_items)
+        self.num_clusters_items = len(unique_items)
         
         # store which cl assignment method
         self.estimated_items = 'vi'

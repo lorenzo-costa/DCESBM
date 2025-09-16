@@ -21,12 +21,16 @@ def validate_models(Y_train,
                     seed=42):    
     """Fits a list of models on training data and validates them using a validation dataset.
     
-    This function trains each model in `model_list` using the provided training data (`Y_train`) and model-specific parameters (`param_list`).
-    After training, it evaluates each model on the validation dataset (`Y_val`) using several metrics:
+    This function trains each model in `model_list` using the provided training data 
+    (`Y_train`) and model-specific parameters (`param_list`).
+    After training, it evaluates each model on the validation dataset (`Y_val`) 
+    using several metrics:
     - Mean Squared Error (MSE)
     - Mean Absolute Error (MAE)
     - Precision@k and Recall@k (ranking metrics based on relevant items per user)
-    Optionally, if the true user and item cluster assignments (`true_users`, `true_items`) are provided, the function computes the Variation of Information (VI) distance between the estimated and true partitions.
+    Optionally, if the true user and item cluster assignments (`true_users`, `true_items`) 
+    are provided, the function computes the Variation of Information (VI) distance 
+    between the estimated and true partitions.
     
     Inputs
     ----------
@@ -63,7 +67,8 @@ def validate_models(Y_train,
     Outputs
     -------
     model_list_out : list
-        List of trained model instances, each annotated with validation metrics (MAE, MSE, precision@k, recall@k, VI distances if applicable).
+        List of trained model instances, each annotated with validation metrics 
+        (MAE, MSE, precision@k, recall@k, VI distances if applicable).
     """
 
     if burn_in is None:
@@ -98,7 +103,10 @@ def validate_models(Y_train,
         print('\nModel name:', name)
         model_type = model_list[i]
         params = param_list[i]
-        model = model_type(Y=Y_train, num_users=Y_train.shape[0], num_items=Y_train.shape[1], **params)
+        model = model_type(Y=Y_train, 
+                           num_users=Y_train.shape[0], 
+                           num_items=Y_train.shape[1], 
+                           **params)
 
         print('Starting training for model', name)
         _ = model.gibbs_train(n_iters, verbose=verbose)
@@ -121,12 +129,15 @@ def validate_models(Y_train,
             if len(val_users_relevant[val_users_unique[j]]) == 0:
                 # no relevant items for that user
                 continue
-            precision_list_model.append(compute_precision(val_users_relevant[val_users_unique[j]], ranks_model[j]))
-            recall_list_model.append(compute_recall(val_users_relevant[val_users_unique[j]], ranks_model[j]))
+            precision = compute_precision(val_users_relevant[val_users_unique[j]], ranks_model[j])
+            precision_list_model.append(precision)
+            recall = compute_recall(val_users_relevant[val_users_unique[j]], ranks_model[j])
+            recall_list_model.append(recall)
 
         if precision_list_model == [] or recall_list_model == []:
-            raise Exception('No users with relevant items in the validation set. Try changing the relevant_threshold parameter.')
-        
+            raise Exception("No users with relevant items in the validation set."
+                            " Try changing the relevant_threshold parameter.")
+
         precision_model = sum(precision_list_model)/len(precision_list_model)
         recall_model = sum(recall_list_model)/len(recall_list_model)
 
@@ -185,8 +196,8 @@ def generate_val_set(y,
 def multiple_runs(true_mod,
                   num_users, 
                   num_items, 
-                  n_cl_u, 
-                  n_cl_i, 
+                  num_clusters_users, 
+                  num_clusters_items, 
                   n_runs, 
                   n_iters, 
                   params_list, 
@@ -203,16 +214,19 @@ def multiple_runs(true_mod,
                   params_init=None):
     
     """
-    Runs multiple experiments by generating synthetic data from a specified model and evaluating a list of models.
+    Runs multiple experiments by generating synthetic data from a specified model 
+    and evaluating a list of models.
+    
     For each run, the function:
     - Randomly assigns users and items to clusters.
     - Generates covariates for users and items based on their cluster assignments.
     - Initializes the true model using the provided parameters and cluster assignments.
     - Splits the generated data into training and validation sets.
-    - Optionally updates covariates in the parameter list for specific models.
-    - Evaluates each model in `model_list` using the `validate_models` subroutine.
-    - Collects evaluation metrics (MSE, MAE, precision, recall, VI for users/items) for each model.
-    
+    - Evaluates each model in `model_list` using the parameters in `params_list` 
+        with the `validate_models` subroutine.
+    - Collects evaluation metrics (MSE, MAE, precision, recall, VI for users and items) 
+        for each model.
+
     Inputs
     ----------
     true_mod : callable
@@ -221,9 +235,9 @@ def multiple_runs(true_mod,
         Number of users in the synthetic dataset.
     num_items : int
         Number of items in the synthetic dataset.
-    n_cl_u : int
+    num_clusters_users : int
         Number of clusters for users.
-    n_cl_i : int
+    num_clusters_items : int
         Number of clusters for items.
     n_runs : int
         Number of experimental runs to perform.
@@ -285,7 +299,7 @@ def multiple_runs(true_mod,
     
     for r in range(n_runs):
         np.random.seed(seed+r)
-        places = np.round(np.random.dirichlet(np.ones(n_cl_u))*num_users)
+        places = np.round(np.random.dirichlet(np.ones(num_clusters_users))*num_users)
         
         # test
         if sum(places) != num_users:
@@ -293,7 +307,8 @@ def multiple_runs(true_mod,
         
         user_clustering = []
         for i in range(len(places)):
-            # using >= (instead of >) here because otherwise it may include higher numbers before lower number
+            # using >= (instead of >) here because otherwise it may include higher 
+            # numbers before lower number
             # e.g. a clustering like 0,0,2,2,3 if 1 is not present it messes up stuff
             while len(user_clustering) < num_users and places[i]>=0: 
                 user_clustering.append(i)
@@ -302,7 +317,7 @@ def multiple_runs(true_mod,
         temp = np.array([1 if user_clustering[i]%2==0 else 0 for i in range(num_users)])
         cov_users = [('cov1_cat', temp.copy())]
         
-        places = np.round(np.random.dirichlet(np.ones(n_cl_i))*num_items)
+        places = np.round(np.random.dirichlet(np.ones(num_clusters_items))*num_items)
         
         #test
         if sum(places) != num_items:
@@ -338,9 +353,19 @@ def multiple_runs(true_mod,
             for place in cov_places_items:
                 params_list[place]['cov_items'] = cov_items
         
-        out = validate_models(Y_train, Y_val, model_list, params_list, n_iters=n_iters, burn_in=burn_in, k = k, 
-                              verbose=verbose, thinning=thinning, model_names=model_names, true_users=true_users, 
-                              true_items=true_items, print_intermid=print_intermid)
+        out = validate_models(Y_train, 
+                              Y_val, 
+                              model_list, 
+                              params_list, 
+                              n_iters=n_iters, 
+                              burn_in=burn_in, 
+                              k = k, 
+                              verbose=verbose, 
+                              thinning=thinning, 
+                              model_names=model_names, 
+                              true_users=true_users, 
+                              true_items=true_items, 
+                              print_intermid=print_intermid)
         
         for m in range(len(out)):
             names_list.append(model_names[m])

@@ -13,11 +13,11 @@ class esbm(Baseline):
     num_users : int
         number of users
     user_clustering : list or array-like
-        cluster assignments for users, by default None. If 'random' generate it from the prior, if None
-        assign each user to its own cluster
+        cluster assignments for users, by default None. If 'random' generate it 
+        from the prior, if None assign each user to its own cluster
     item_clustering : list or array-like
-        cluster assignments for items, by default None. If 'random' generate it from the prior, if None
-        assign each item to its own cluster
+        cluster assignments for items, by default None. If 'random' generate it 
+        from the prior, if None assign each item to its own cluster
     Y : 2D array
         adjacency matrix (if None automatically generated), by default None
     theta : (2D array)
@@ -44,7 +44,8 @@ class esbm(Baseline):
     degree_param_items : float
         degree-correction parameter for items (relevant only for DC model), by default 1
     alpha_c : float or list
-        additional parameter for categorical covariate model (if int defaults to vector of equal numbers), by default 1
+        additional parameter for categorical covariate model (if int defaults to 
+        vector of equal numbers), by default 1
     cov_users : list
         list of tuples (covname_covtype, covvalues) for user covariates, by default None
     cov_items : list
@@ -64,9 +65,9 @@ class esbm(Baseline):
         number of items
     num_users : int
         number of users
-    n_clusters_users : int
+    num_clusters_users : int
         number of clusters in the users
-    n_clusters_items : int
+    num_clusters_items : int
         number of clusters in the items
     train_llk : 1D array 
         log-likelihood values during training
@@ -125,7 +126,7 @@ class esbm(Baseline):
         mhk = self.compute_mhk()
         yuk = self.compute_yuk()
 
-        H = self.n_clusters_users
+        H = self.num_clusters_users
         V = self.num_users        
         nch = self.cov_nch_users
         
@@ -153,11 +154,13 @@ class esbm(Baseline):
             # if the current cluster becomes empty, remove that row
             if frequencies_users_minus[cluster_user] == 0:
                 mhk_minus = np.vstack([mhk[:cluster_user], mhk[cluster_user+1:]])
-                frequencies_users_minus = np.concatenate([frequencies_users_minus[:cluster_user], frequencies_users_minus[cluster_user+1:]])
+                frequencies_users_minus = np.concatenate([frequencies_users_minus[:cluster_user], 
+                                                          frequencies_users_minus[cluster_user+1:]])
                 H -= 1
                 if nch is not None:
                     for cov in range(len(nch)):
-                        nch_minus[cov] = np.hstack([nch[cov][:, :cluster_user], nch[cov][:, cluster_user+1:]])
+                        nch_minus[cov] = np.hstack([nch[cov][:, :cluster_user], 
+                                                    nch[cov][:, cluster_user+1:]])
             # else copy mhk and comoute mhk without u
             else:
                 mhk_minus = mhk.copy()
@@ -193,14 +196,20 @@ class esbm(Baseline):
             # compute covs part       
             log_probs_cov = 0
             if nch is not None:
-                log_probs_cov = compute_log_probs_cov(probs, idx=u, cov_types=self.cov_types_users, cov_nch = nch_minus, cov_values = self.cov_values_users, 
-                                                nh=frequencies_users_minus, alpha_c = self.alpha_c, alpha_0 = self.alpha_0)
-            
+                log_probs_cov = compute_log_probs_cov(probs, 
+                                                      idx=u, 
+                                                      cov_types=self.cov_types_users, 
+                                                      cov_nch=nch_minus, 
+                                                      cov_values=self.cov_values_users, 
+                                                      nh=frequencies_users_minus, 
+                                                      alpha_c=self.alpha_c, 
+                                                      alpha_0=self.alpha_0)
+
             # sum and use exp trick for stability
             probs = np.log(probs+self.epsilon)+log_probs + log_probs_cov
             probs = np.exp(probs-max(probs))
-            probs /= probs.sum()
-            
+            probs = probs/probs.sum()
+
             # choose cluster assignment
             assignment = np.random.choice(len(probs), p=probs)
             
@@ -237,7 +246,8 @@ class esbm(Baseline):
                     if nch is not None:
                         for cov in range(len(nch)):
                             c = self.cov_values_users[cov][u]
-                            nch_minus[cov] = np.column_stack([nch_minus[cov], np.zeros(nch_minus[cov].shape[0])])
+                            padding = np.zeros((nch[cov].shape[0], 1))
+                            nch_minus[cov] = np.column_stack([nch_minus[cov], padding])
                             nch_minus[cov][c, assignment] += 1
                             
                         nch = nch_minus
@@ -259,13 +269,13 @@ class esbm(Baseline):
                 frequencies_users = frequencies_users_minus
         
         self.cov_nch_users = nch
-        self.n_clusters_users = H
+        self.num_clusters_users = H
         self.frequencies_users = frequencies_users
 
         ################################################
         # step for items
         ################################################
-        K = self.n_clusters_items
+        K = self.num_clusters_items
         V = self.num_items
 
         yih = self.compute_yih()
@@ -295,30 +305,57 @@ class esbm(Baseline):
             # if cluster becomes empty remove that row
             if frequencies_items_minus[cluster_item]==0:
                 mhk_minus = np.hstack([mhk[:, :cluster_item],mhk[:, cluster_item+1:]])
-                frequencies_items_minus = np.concatenate([frequencies_items_minus[:cluster_item], frequencies_items_minus[cluster_item+1:]])
+                frequencies_items_minus = np.concatenate([frequencies_items_minus[:cluster_item], 
+                                                          frequencies_items_minus[cluster_item+1:]])
                 K -= 1
                 if nch is not None:
                     for cov in range(len(nch)):
-                        nch_minus[cov] = np.hstack([nch[cov][:, :cluster_item], nch[cov][:, cluster_item+1:]])
+                        nch_minus[cov] = np.hstack([nch[cov][:, :cluster_item], 
+                                                    nch[cov][:, cluster_item+1:]])
             # else simply compute mhk minus
             else:
                 mhk_minus = mhk.copy()
                 mhk_minus[:, cluster_item] -= yih[i]
 
             # contribution of prior
-            probs = sampling_scheme(V, K, frequencies=frequencies_items_minus, bar_h=self.bar_h_items, scheme_type=self.scheme_type, scheme_param=self.scheme_param, sigma=self.sigma, gamma=self.gamma)
+            probs = sampling_scheme(V=V, 
+                                    H=K, 
+                                    frequencies=frequencies_items_minus, 
+                                    bar_h=self.bar_h_items, 
+                                    scheme_type=self.scheme_type, 
+                                    scheme_param=self.scheme_param, 
+                                    sigma=self.sigma, 
+                                    gamma=self.gamma)
             
             # contribution of adj matrix
-            log_probs = compute_log_prob(probs, mhk_minus=mhk_minus, frequencies_primary_minus=frequencies_items_minus, frequencies_secondary=frequencies_users,
-                                     y_values=np.ascontiguousarray(yih[i]), epsilon=self.epsilon, a=self.prior_a, b=self.prior_b, max_clusters=K, 
-                                     is_user_mode=False, degree_corrected=False, degree_param=1, degree_cluster_minus=[1], degree_node=1, device=self.device)
+            log_probs = compute_log_prob(probs=probs, 
+                                         mhk_minus=mhk_minus, 
+                                         frequencies_primary_minus=frequencies_items_minus, 
+                                         frequencies_secondary=frequencies_users,
+                                         y_values=np.ascontiguousarray(yih[i]), 
+                                         epsilon=self.epsilon, 
+                                         a=self.prior_a, 
+                                         b=self.prior_b, 
+                                         max_clusters=K, 
+                                         is_user_mode=False, 
+                                         degree_corrected=False, 
+                                         degree_param=1, 
+                                         degree_cluster_minus=[1], 
+                                         degree_node=1, 
+                                         device=self.device)
             
             # contribution of covs
             log_probs_cov = 0
             if nch is not None:
-                log_probs_cov = compute_log_probs_cov(probs, idx=i, cov_types=self.cov_types_items, cov_nch = nch_minus, cov_values = self.cov_values_items, 
-                                                nh=frequencies_items_minus, alpha_c = self.alpha_c, alpha_0 = self.alpha_0)
-            
+                log_probs_cov = compute_log_probs_cov(probs=probs, 
+                                                      idx=i, 
+                                                      cov_types=self.cov_types_items, 
+                                                      cov_nch=nch_minus, 
+                                                      cov_values=self.cov_values_items, 
+                                                      nh=frequencies_items_minus, 
+                                                      alpha_c=self.alpha_c, 
+                                                      alpha_0=self.alpha_0)
+
             # sum and use exp trick for stability               
             probs = np.log(probs+self.epsilon)+log_probs+log_probs_cov
             probs = np.exp(probs-max(probs))
@@ -338,8 +375,9 @@ class esbm(Baseline):
             # changing cluster
             else:
                 if frequencies_items[cluster_item]==0:
-                    self.item_clustering[np.where(self.item_clustering>= cluster_item)] -= 1
-                
+                    mask = np.where(self.item_clustering>= cluster_item)
+                    self.item_clustering[mask] -= 1
+
                 # creating a new (prev empty) cluster
                 if assignment >= K:
                     if self.verbose_items is True:
@@ -357,7 +395,8 @@ class esbm(Baseline):
                     if nch is not None:
                         for cov in range(len(nch)):
                             c = self.cov_values_items[cov][i]
-                            nch_minus[cov] = np.column_stack([nch_minus[cov], np.zeros(nch_minus[cov].shape[0])])
+                            padding = np.zeros((nch[cov].shape[0], 1))
+                            nch_minus[cov] = np.column_stack([nch_minus[cov], padding])
                             nch_minus[cov][c, assignment] += 1
                         nch = nch_minus
                         
@@ -381,7 +420,7 @@ class esbm(Baseline):
                 frequencies_items = frequencies_items_minus
                 
         self.cov_nch_items = nch
-        self.n_clusters_items = K
+        self.num_clusters_items = K
         self.frequencies_items = frequencies_items
         return
     
@@ -392,8 +431,9 @@ class esbm(Baseline):
             raise Exception('cluster assignment must be estimated first')
         
         mhk = self.compute_mhk(self.user_clustering, self.item_clustering)
-        theta = (self.prior_a + mhk) / (self.prior_b + np.outer(self.frequencies_users, self.frequencies_items))
-        
+        outer_prod = np.outer(self.frequencies_users, self.frequencies_items)
+        theta = (self.prior_a + mhk) / (self.prior_b + outer_prod)
+
         self.estimated_theta = theta
         return theta
     
@@ -443,7 +483,8 @@ class esbm(Baseline):
             zu = self.user_clustering[u]
             preds = theta[zu]
             top_cluster = np.argsort(preds)[::-1][0]
-            top_items = np.arange(self.num_items)[np.where(self.item_clustering==top_cluster)]
+            mask = np.where(self.item_clustering==top_cluster)
+            top_items = np.arange(self.num_items)[mask]
             unseen_items = np.where(self.Y[u] == 0)[0]
             unseen_items_intersect = np.intersect1d(top_items, unseen_items)
             out.append(unseen_items_intersect)
@@ -458,6 +499,32 @@ class esbm(Baseline):
     # - 'popularity': selects the most popular items (i.e. most reviewed) 
     #    in the cluster with highest score
     def predict_k(self, users, k=10, mode='random', seed=42):
+        """Predict k items for each user.
+
+        Parameters
+        ----------
+        users : list or array-like
+            List of user IDs for which to predict items.
+        k : int, optional
+            Number of items to predict for each user, by default 10
+        mode : str, optional
+            Selection mode for predicted items:
+            - 'random': Randomly selects k items from the top cluster.
+            - 'popularity': Selects the k most popular items (most reviewed) from the top cluster.
+            By default 'random'
+        seed : int, optional
+            Random seed for reproducibility, by default 42
+
+        Returns
+        -------
+        list
+            List of recommended item IDs for each user.
+
+        Raises
+        ------
+        Exception
+            If cluster assignment has not been estimated.
+        """
         np.random.seed(seed)
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
@@ -470,6 +537,7 @@ class esbm(Baseline):
             
         theta = self.estimated_theta
         out = []
+        
         for u in users:
             zu = self.user_clustering[u]
             preds = theta[zu]
@@ -478,15 +546,18 @@ class esbm(Baseline):
             unseen_items = np.where(self.Y[u] == 0)[0]
             unseen_items_intersect = np.intersect1d(top_items, unseen_items)
             i = 1
+            
             while len(unseen_items_intersect) < k:
                 top_cluster = np.argsort(preds)[::-1][i]
                 top_items = np.arange(self.num_items)[np.where(self.item_clustering==top_cluster)]
                 unseen_items_intersect_ext = np.intersect1d(top_items, unseen_items)
                 to_pick = k-len(unseen_items_intersect)
+                
                 if len(unseen_items_intersect_ext) < to_pick:
                     unseen_items_intersect_add = unseen_items_intersect_ext
                 else:
                     unseen_items_intersect_add = np.random.choice(unseen_items_intersect_ext, k-len(unseen_items_intersect), replace=False)
+                
                 unseen_items_intersect = np.concatenate([unseen_items_intersect, unseen_items_intersect_add])
                 i += 1
                 
@@ -496,6 +567,7 @@ class esbm(Baseline):
             
             if mode == 'random':
                 out.append(np.random.choice(unseen_items_intersect, k, replace=False))
+                
             if mode == 'popularity':
                 degree_candindates = degree_items[unseen_items_intersect]
                 top_items = np.argsort(degree_candindates)[::-1][0:k]
