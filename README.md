@@ -66,7 +66,10 @@ Note:
 - requires internet connection
 - may be quite slow
 
-Alternatively you can dowload the data from [here](https://drive.google.com/file/d/1AaZomR9mWmkn6FP4KxtM86PdKuQjZ-zl/view?usp=drive_link)
+Alternatively you can dowload the data using
+```bash
+gdown 'https://drive.google.com/uc?id=1AaZomR9mWmkn6FP4KxtM86PdKuQjZ-zl' -O data/processed/dataset_clean.csv
+```
 
 2. Run simulations
 ```bash

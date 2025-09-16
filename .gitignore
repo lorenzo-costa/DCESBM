@@ -1,6 +1,9 @@
 
 __pycache__/
-data/
+
+data/processed/dataset_clean.csv
+data/raw/goodreads_interactions_dedup.json.gz
+
 questions.txt
 package_import.py
 # do not track changes in intermediate files
