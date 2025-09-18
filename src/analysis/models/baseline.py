@@ -148,12 +148,28 @@ class Baseline:
             if not isinstance(sigma, (int, float)) or (sigma < 0 or sigma >= 1):
                 raise Exception('provide sigma in [0, 1) for PY')
             if not isinstance(scheme_param, (int, float)) or scheme_param <= -sigma:
-                raise Exception('provide valid user_clustering parameter for PY')
+                raise Exception('provide valid user clustering parameter for PY')
             if sigma == 0:
                 print('note: for sigma=0 the PY reduces to DP, use scheme_type=DP for greater efficiency')
         if scheme_type == 'GN':
             if not isinstance(gamma, float) or (gamma<=0 or gamma>= 1):
                 raise Exception('please provide valid gamma paramter for GN')
+            
+        if user_clustering is not None and user_clustering != 'random':
+            if not isinstance(user_clustering, (list, np.ndarray)):
+                raise Exception('user clustering must be a list or array')
+            if len(user_clustering) != num_users:
+                raise Exception('user clustering length does not match number of users')
+            if min(user_clustering) < 0:
+                raise Exception('user clustering must be non-negative integers')
+        
+        if item_clustering is not None and item_clustering != 'random':
+            if not isinstance(item_clustering, (list, np.ndarray)):
+                raise Exception('item clustering must be a list or array')
+            if len(item_clustering) != num_items:
+                raise Exception('item clustering length does not match number of items')
+            if min(item_clustering) < 0:
+                raise Exception('item clustering must be non-negative integers')
 
         self.seed = seed
         self.num_items = num_items

@@ -22,6 +22,104 @@ class TestInitMethod:
             'device': 'cpu'
         }
     
+    # User Clustering Tests
+    def test_user_clustering_invalid_type(self):
+        """Test invalid user_clustering type"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'user_clustering': 1 
+        })
+        with pytest.raises(Exception, match='user clustering must be a list or array'):
+            Baseline(**params)
+    
+    def test_user_clustering_length_mismatch(self):
+        """Test user_clustering length mismatch"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'user_clustering': [0, 1, 0]  # Length != num_users (50)
+        })
+        with pytest.raises(Exception, match='user clustering length does not match number of users'):
+            Baseline(**params)
+    
+    def test_user_clustering_negative_values(self):
+        """Test user_clustering with negative values"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'user_clustering': [0, -1, 2] + [0]*47  
+        })
+        with pytest.raises(Exception, match='user clustering must be non-negative integers'):
+            Baseline(**params)
+    
+    def test_user_clustering_empty_list(self):
+        """Test user_clustering with empty list"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'user_clustering': [] 
+        })
+        with pytest.raises(Exception, match='user clustering length does not match number of users'):
+            Baseline(**params)
+     
+    # Item Clustering Tests       
+    def item_clustering_invalid_type(self):
+        """Test invalid item_clustering type"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'item_clustering': 1 
+        })
+        with pytest.raises(Exception, match='item clustering must be a list or array'):
+            Baseline(**params)
+    
+    def test_item_clustering_length_mismatch(self):
+        """Test item_clustering length mismatch"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'item_clustering': [0, 1, 0]  # Length != num_items (100)
+        })
+        with pytest.raises(Exception, match='item clustering length does not match number of items'):
+            Baseline(**params)
+    
+    def test_item_clustering_negative_values(self):
+        """Test item_clustering with negative values"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'item_clustering': [0, -1, 2] + [0]*97  
+        })
+        with pytest.raises(Exception, match='item clustering must be non-negative integers'):
+            Baseline(**params)
+    
+    def test_item_clustering_empty_list(self):
+        """Test item_clustering with empty list"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'PY',
+            'sigma': 0.5,
+            'scheme_param': 1.0,
+            'item_clustering': [] 
+        })
+        with pytest.raises(Exception, match='item clustering length does not match number of items'):
+            Baseline(**params)
+    
     # DM Scheme Tests
     def test_dm_valid_parameters(self):
         """Test DM scheme with valid parameters"""
