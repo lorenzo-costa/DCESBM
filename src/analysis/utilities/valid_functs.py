@@ -1,6 +1,6 @@
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from utilities.misc_functs import compute_precision, compute_recall
-from utilities.vi_functs import VI
+from .misc_functs import compute_precision, compute_recall
+from .vi_functs import VI
 import numpy as np
 
 

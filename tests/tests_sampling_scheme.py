@@ -1,6 +1,8 @@
 import sys
-sys.path.append("src/analysis")
-from utilities.numba_functions import sampling_scheme
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+from src.analysis.utilities.numba_functions import sampling_scheme
 import numpy as np
 import pytest
 

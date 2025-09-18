@@ -6,7 +6,7 @@
 import numba as nb
 from math import lgamma
 import numpy as np
-from gpu_functions import compute_prob_gpu
+from .gpu_functions import compute_prob_gpu
 
 ###########################################
 @nb.jit(nopython=True, fastmath=True)

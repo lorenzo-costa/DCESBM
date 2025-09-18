@@ -1,7 +1,11 @@
-from models.baseline import Baseline
 import numpy as np
-from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
 import time
+import sys
+from pathlib import Path
+
+from models.baseline import Baseline
+from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
+
 
 class dcesbm(Baseline):
     """Degree-Corrected Exteneded Stochastic Block Model

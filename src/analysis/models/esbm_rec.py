@@ -1,7 +1,10 @@
-from models.baseline import Baseline
 import numpy as np
-from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov
+import sys
+from pathlib import Path
 
+
+from models.baseline import Baseline
+from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov
 
 class esbm(Baseline):
     """Bipartite Extended Stochastic Block Model (ESBM) with Poisson likelihood.

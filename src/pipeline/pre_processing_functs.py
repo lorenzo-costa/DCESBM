@@ -1,6 +1,5 @@
 ########################
 # Functions used for loading .gz file 
-############################
 
 import gzip
 import json

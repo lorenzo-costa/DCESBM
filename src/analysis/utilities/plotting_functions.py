@@ -2,7 +2,6 @@
 # auxialiaries for plotting
 
 # function to plot the heatmap representation
-
 def plot_heatmap(model, 
                  user_covariates=None, 
                  item_covariates=None, 

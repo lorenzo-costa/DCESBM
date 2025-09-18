@@ -1,8 +1,10 @@
 import pytest
 import sys
+from pathlib import Path
 
-sys.path.append("src/analysis")
-from models.baseline import Baseline
+sys.path.append(str(Path(__file__).parent.parent))
+
+from src.analysis.models.baseline import Baseline
 
 
 class TestInitMethod:
@@ -379,7 +381,7 @@ class TestInitMethod:
             'sigma': 0.5,
             'scheme_param': 'invalid'
         })
-        with pytest.raises(Exception, match='provide valid user_clustering parameter for PY'):
+        with pytest.raises(Exception, match='provide valid user clustering parameter for PY'):
             Baseline(**params)
     
     def test_py_invalid_scheme_param_too_small(self):
@@ -390,7 +392,7 @@ class TestInitMethod:
             'sigma': 0.5,
             'scheme_param': -0.5  # Equal to -sigma
         })
-        with pytest.raises(Exception, match='provide valid user_clustering parameter for PY'):
+        with pytest.raises(Exception, match='provide valid user clustering parameter for PY'):
             Baseline(**params)
     
     def test_py_invalid_scheme_param_less_than_negative_sigma(self):
@@ -401,7 +403,7 @@ class TestInitMethod:
             'sigma': 0.5,
             'scheme_param': -0.6  # Less than -sigma
         })
-        with pytest.raises(Exception, match='provide valid user_clustering parameter for PY'):
+        with pytest.raises(Exception, match='provide valid user clustering parameter for PY'):
             Baseline(**params)
     
     # GN Scheme Tests

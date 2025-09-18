@@ -1,6 +1,10 @@
 import numpy as np
 from scipy import sparse
 from scipy.stats import mode
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
 
 from utilities.numba_functions import sampling_scheme, compute_log_probs_cov, compute_log_likelihood
 from utilities.misc_functs import compute_co_clustering_matrix

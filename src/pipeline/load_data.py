@@ -13,9 +13,7 @@ interactions_DIR = 'data/raw/goodreads_interactions_dedup.json.gz'
 books_DIR = 'data/raw/goodreads_books.json.gz'
 works_DIR = 'data/raw/goodreads_book_works.json.gz'
 
-######################################
 # pick only the most read 1k books and most active 1k users
-#######################################
 subset_size = 1000
 out_users, out_books = process_data(interactions_DIR, stop=1e8, step = 1e6)
 
@@ -98,7 +96,8 @@ with open('data/processed/book_info.json', 'w') as f:
 # should not raise exception if all books are processed correctly
 # raises exception if only a subset of the dataset is used
 if merged_dataset.isna().any().any():
-    raise Exception("Merged dataset contains NaN values. Please check the data processing steps.")
+    raise Exception("Merged dataset contains NaN values."
+                    "Please check the data processing steps.")
 
 # save everything in data/processed
 with open("data/processed/user_counts.json", "w") as f:
