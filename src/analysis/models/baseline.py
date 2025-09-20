@@ -184,10 +184,30 @@ class Baseline:
             if min(item_clustering) < 0:
                 raise Exception('item clustering must be non-negative integers')
         
-        if not isinstance(cov_users, (type(None), list)):
-            raise Exception('covariates for users must be provided as a list of tuples')
-        if not isinstance(cov_items, (type(None), list)):
-            raise Exception('covariates for items must be provided as a list of tuples')
+        if cov_users is not None:
+            if not isinstance(cov_users, (list)):
+                raise Exception('covariates for users must be provided as a list of tuples')
+            for cov in cov_users:
+                if not isinstance(cov, tuple):
+                    raise Exception('each covariate for users must be provided as a tuple')
+                if not isinstance(cov[0], str):
+                    raise Exception('covariate name and type for users must be provided as a string')
+                if not isinstance(cov[1], (list, np.ndarray)):
+                    raise Exception('covariate values for users must be provided as a list or array')
+                if len(cov[1]) != num_users:
+                    raise Exception(f'covariate length is {len(cov[1])} but should be {num_users}')
+        if cov_items is not None:
+            if not isinstance(cov_items, (list)):
+                raise Exception('covariates for items must be provided as a list of tuples')
+            for cov in cov_items:
+                if not isinstance(cov, tuple):
+                    raise Exception('each covariate for items must be provided as a tuple')
+                if not isinstance(cov[0], str):
+                    raise Exception('covariate name and type for items must be provided as a string')
+                if not isinstance(cov[1], (list, np.ndarray)):
+                    raise Exception('covariate values for items must be provided as a list or array')
+                if len(cov[1]) != num_items:
+                    raise Exception(f'covariate length is {len(cov[1])} but should be {num_items}')
 
         self.seed = seed
         self.num_items = num_items
@@ -335,9 +355,10 @@ class Baseline:
             H = 1
             V = 1
             users_frequencies = [1]
-            
-            print('initialsing user clusters random')
-            
+
+            if self.verbose_users is True:
+                print('initialsing user clusters random')
+
             nch_users = None
             if self.cov_users is not None:
                 nch_users = []
@@ -413,7 +434,8 @@ class Baseline:
             V = 1
             items_frequencies = [1]
             
-            print('initialising item clusters random')
+            if self.verbose_items is True:
+                print('initialising item clusters random')
             
             nch_items = None
             if self.cov_items is not None:
@@ -595,7 +617,7 @@ class Baseline:
             cov_name, cov_type = cov[0].split('_')
             cov_names.append(cov_name)
             cov_types.append(cov_type)
-            cov_values.append(cov[1])  
+            cov_values.append(np.array(cov[1]))  
 
         if isinstance(self.alpha_c, (int, float)):
             temp = []
@@ -692,7 +714,8 @@ class Baseline:
         
         ll = self.compute_log_likelihood()
         
-        print('starting log likelihood', ll)
+        if verbose>0:
+            print('starting log likelihood', ll)
         llks = np.zeros(n_iters+1)
         user_cluster_list = np.zeros((n_iters+1, self.num_users), dtype=np.int32)
         item_cluster_list = np.zeros((n_iters+1, self.num_items), dtype=np.int32)
@@ -726,7 +749,8 @@ class Baseline:
                         print('user cluser ', self.user_clustering)
                         print('item cluster ', self.item_clustering)
         
-        print('end llk: ', llks[-1])
+        if verbose>0:
+            print('end llk: ', llks[-1])
         self.train_llk = llks
         self.mcmc_draws_users = user_cluster_list
         self.mcmc_draws_items = item_cluster_list
