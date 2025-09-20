@@ -373,7 +373,7 @@ class Baseline:
                 # prior contribution
                 probs = sampling_scheme(V=V, 
                                         H=H, 
-                                        frequencies=users_frequencies, 
+                                        frequencies=np.array(users_frequencies), 
                                         bar_h=self.bar_h_users, 
                                         scheme_type=self.scheme_type,
                                         scheme_param=self.scheme_param, 
@@ -387,12 +387,9 @@ class Baseline:
                                                           cov_types=self.cov_types_users, 
                                                           cov_nch=nch_users, 
                                                           cov_values=self.cov_values_users, 
-                                                          nh=users_frequencies, 
+                                                          nh=np.array(users_frequencies), 
                                                           alpha_c=self.alpha_c, 
                                                           alpha_0=self.alpha_0)
-                     
-                    
-                    
                 
                 # convert back using exp and normalise
                 probs = np.log(probs+self.epsilon)+log_probs_cov
@@ -450,7 +447,7 @@ class Baseline:
             for i in range(1, self.num_items):
                 probs = sampling_scheme(V=V, 
                                         H=K, 
-                                        frequencies=items_frequencies, 
+                                        frequencies=np.array(items_frequencies), 
                                         bar_h=self.bar_h_items, 
                                         scheme_type=self.scheme_type,
                                         scheme_param=self.scheme_param, 
@@ -464,7 +461,7 @@ class Baseline:
                                                           cov_types=self.cov_types_items, 
                                                           cov_nch=nch_items, 
                                                           cov_values=self.cov_values_items,
-                                                          nh=items_frequencies,
+                                                          nh=np.array(items_frequencies),
                                                           alpha_c=self.alpha_c, 
                                                           alpha_0=self.alpha_0)
 
