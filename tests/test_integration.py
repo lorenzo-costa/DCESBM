@@ -42,14 +42,32 @@ class TestIntegration:
             'device': 'cpu'
         }
         
+        n_users_runs, n_items_runs = 50, 50
+        num_clusters_users_runs, num_clusters_items_runs = 4, 4
+        
+        self.run_params_init = {
+            'num_users': n_users_runs,
+            'num_items': n_items_runs,
+            'bar_h_users': num_clusters_users_runs,
+            'bar_h_items': num_clusters_items_runs,
+            'item_clustering': 'random',
+            'user_clustering': 'random',
+            'degree_param_users': 10,
+            'degree_param_items': 10,
+            'scheme_type': 'DM',
+            'seed': 42,
+            'sigma': -0.9
+        }
+        
         self.runs_params = {
-            'n_users': 30,
-            'n_items': 30,
-            'num_clusters_users': 4,
-            'num_clusters_items': 4,
+            'params_init': self.run_params_init,
+            'num_users': n_users_runs,
+            'num_items': n_items_runs,
+            'num_clusters_users': num_clusters_users_runs,
+            'num_clusters_items': num_clusters_items_runs,
             'n_runs': 1,
-            'n_iters': 100,
-            'burn_in': 25,
+            'n_iters': 1000,
+            'burn_in': 250,
             'thinning': 2,
             'k': 5,
             'n_runs': 1,
@@ -83,85 +101,77 @@ class TestIntegration:
         dcesbmllk_final = outdcesbm[0][-1]
         assert esbmllk_final > baselinellk_final
         assert dcesbmllk_final > baselinellk_final
-
-    @pytest.mark.parametrize("true_mod", ['dcesbm'])
-    def test_multiple_runs(self, true_mod):
         
-        if true_mod == 'dcesbm':
+    @pytest.mark.parametrize("true_model", ['dcesbm', 'esbm'])
+    def test_multiple_runs_nocov(self, true_model):
+        if true_model == 'dcesbm':
             true_mod = dcesbm
         else:
             true_mod = esbm
         
-        n_users = 30
-        n_items = 30
-        num_clusters_users = 4
-        num_clusters_items = 4
-        
-        seed = 1
-        n_iters = 100
-        burn_in = 25
-        thinning = 2
-        k = 5
-        n_runs = 1
-        
-        params_init = {
-            'num_users': n_users,
-            'num_items': n_items,
-            'bar_h_users': num_clusters_users,
-            'bar_h_items': num_clusters_items,
-            'item_clustering': 'random',
-            'user_clustering': 'random',
-            'degree_param_users': 5,
-            'degree_param_items': 5,
-            'scheme_type': 'DM',
-            'seed': 42,
-            'sigma': -0.9
-        }
-        
         params_dp = {'scheme_type': 'DP'}
         params_py = {'scheme_type': 'PY',}
         params_gn = {'scheme_type': 'GN',}
-        params_dp_cov = {'scheme_type':'DP'}
-        params_py_cov = {'scheme_type':'PY'}
-        params_gn_cov = {'scheme_type':'GN'}
         
-        params_list = [params_dp, params_py, params_gn,
-                       params_dp_cov, params_py_cov, params_gn_cov,
-                        params_dp, params_py, params_gn, 
-                        params_dp_cov, params_py_cov, params_gn_cov]
-        
-        model_list = [dcesbm, dcesbm, dcesbm,
-                       dcesbm, dcesbm, dcesbm,
-                       esbm, esbm, esbm, esbm, esbm, esbm]
-        
-        model_names = ['dcesbm_dp', 'dcesbm_py', 'dcesbm_gn',
-                       'dcesbm_dp_cov', 'dcesbm_py_cov', 'dcesbm_gn_cov',
-                       'esbm_dp', 'esbm_py', 'esbm_gn',
-                       'esbm_dp_cov', 'esbm_py_cov', 'esbm_gn_cov']
-        
-        cov_places_users = [3,4,5]#, 9, 10, 11]
-        cov_places_items = [3,4,5]#, 9, 10, 11]
-        
+        params_list = [params_dp, params_py, params_gn, 
+                       params_dp, params_py, params_gn]
+
+        model_list = [dcesbm, dcesbm, dcesbm, esbm, esbm, esbm]
+
+        model_names = ['dcesbm_dp', 'dcesbm_py', 'dcesbm_gn', 'esbm_dp', 'esbm_py', 'esbm_gn']
+
         out = multiple_runs(
             true_mod=true_mod, 
-            params_init=params_init, 
-            num_users=n_users, 
-            num_items=n_items, 
-            num_clusters_users=num_clusters_users, 
-            num_clusters_items=num_clusters_items, 
-            n_runs=n_runs, 
-            n_iters=n_iters,
             params_list=params_list, 
             model_list=model_list, 
-            model_names=model_names, 
-            cov_places_users=cov_places_users, 
-            cov_places_items=cov_places_items, 
-            k=k, 
+            model_names=model_names,  
             print_intermid=True, 
-            verbose=1, 
-            burn_in=burn_in, 
-            thinning=thinning, 
-            seed=seed)
+            verbose=0,
+            **self.runs_params)
+        
+        assert out is not None
+        
+        vi_users_list=out[5]
+        vi_items_list=out[6]
+        
+        n_runs = self.runs_params['n_runs']
+
+        vi_users_dcesbm_dp = np.mean(vi_users_list[0::n_runs])
+        vi_users_dcesbm_py = np.mean(vi_users_list[1::n_runs])
+        vi_users_dcesbm_gn = np.mean(vi_users_list[2::n_runs])
+        vi_users_esbm_dp = np.mean(vi_users_list[3::n_runs])
+        vi_users_esbm_py = np.mean(vi_users_list[4::n_runs])
+        vi_users_esbm_gn = np.mean(vi_users_list[5::n_runs])
+        
+        vi_items_dcesbm_dp = np.mean(vi_items_list[0::n_runs])
+        vi_items_dcesbm_py = np.mean(vi_items_list[1::n_runs])
+        vi_items_dcesbm_gn = np.mean(vi_items_list[2::n_runs])
+        vi_items_esbm_dp = np.mean(vi_items_list[3::n_runs])
+        vi_items_esbm_py = np.mean(vi_items_list[4::n_runs])
+        vi_items_esbm_gn = np.mean(vi_items_list[5::n_runs])
+
+        # if true model is dcesbm, dcesbm should recover true structure better
+        if true_model == 'dcesbm':
+            assert vi_users_dcesbm_dp <= vi_users_esbm_dp
+            assert vi_users_dcesbm_py <= vi_users_esbm_py
+            assert vi_users_dcesbm_gn <= vi_users_esbm_gn
+            assert vi_items_dcesbm_dp <= vi_items_esbm_dp
+            assert vi_items_dcesbm_py <= vi_items_esbm_py
+            assert vi_items_dcesbm_gn <= vi_items_esbm_gn
+        else:
+            assert vi_users_esbm_dp <= vi_users_dcesbm_dp
+            assert vi_users_esbm_py <= vi_users_dcesbm_py
+            assert vi_users_esbm_gn <= vi_users_dcesbm_gn
+            assert vi_items_esbm_dp <= vi_items_dcesbm_dp
+            assert vi_items_esbm_py <= vi_items_dcesbm_py
+            assert vi_items_esbm_gn <= vi_items_dcesbm_gn
+
+        
+        
+
+        
+        
+        
         
         assert out is not None
         

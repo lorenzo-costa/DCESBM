@@ -310,9 +310,8 @@ def multiple_runs(true_mod,
             params_init['item_clustering'] = 'random'
             params_init['cov_users'] = None
             params_init['cov_items'] = None
-        
+
         true_model = true_mod(**params_init)
-        
         Y_train, Y_val = generate_val_set(true_model.Y, size=0.1, seed=42, only_observed=False)
         true_users = true_model.user_clustering.copy()
         true_items = true_model.item_clustering.copy()
@@ -328,14 +327,14 @@ def multiple_runs(true_mod,
         idxs = np.random.choice(num_items, size=int(0.1*num_items), replace=False)
         temp[idxs] = ~temp[idxs]
         cov_items = [('cov1_cat', temp.astype(int).copy())]
-        
+                
         if cov_places_users is not None:
             for place in cov_places_users:
                 params_list[place]['cov_users'] = cov_users
         if cov_places_items is not None:
             for place in cov_places_items:
                 params_list[place]['cov_items'] = cov_items
-        
+
         out = validate_models(Y_train, 
                               Y_val, 
                               model_list, 
