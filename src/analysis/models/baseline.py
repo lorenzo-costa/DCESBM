@@ -3,6 +3,7 @@ from scipy import sparse
 from scipy.stats import mode
 import sys
 from pathlib import Path
+import warnings
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -123,91 +124,115 @@ class Baseline:
 
         # a lot of type and value checking
         
-        if num_items is None or not isinstance(num_items, int) or num_items <= 0:
-            raise Exception('please provide valid number of items')
-        
-        if num_users is None or not isinstance(num_users, int) or num_users <= 0:
-            raise Exception('please provide valid number of users')
-        
-        if prior_a <= 0 or not isinstance(prior_a, (int, float)):
-            raise Exception('please provide valid prior a parameter (>0)')
-        if prior_b <= 0 or not isinstance(prior_b, (int, float)):
-            raise Exception('please provide valid prior b parameter (>0)')
+        if num_items is None or not isinstance(num_items, int):
+            raise TypeError(f'number of items should be an integer. You provided {type(num_items)}')
+        if num_items <= 0:
+            raise ValueError(f'please provide valid number of items. You provided {num_items}')
 
-        if scheme_type is None:
-            raise Exception('please provide scheme type')    
-        
-        if scheme_type not in ['DP', 'PY', 'GN', 'DM']:
-            raise Exception('scheme type must be one of DP, PY, GN, DM')  
-        
+        if num_users is None or not isinstance(num_users, int):
+            raise TypeError(f'number of users should be an integer. You provided {type(num_users)}')
+        if num_users <= 0:
+            raise ValueError(f'please provide valid number of users. You provided {num_users}')
+
+        if not isinstance(prior_a, (int, float)):
+            raise TypeError(f'prior a should be a float or int. You provided {type(prior_a)}')
+        if prior_a <= 0:
+            raise ValueError(f'please provide valid prior a parameter (>0). You provided {prior_a}')
+        if not isinstance(prior_b, (int, float)):
+            raise TypeError(f'prior b should be a float or int. You provided {type(prior_b)}')
+        if prior_b <= 0:
+            raise ValueError(f'please provide valid prior b parameter (>0). You provided {prior_b}')
+
+        if scheme_type is None or scheme_type not in ['DP', 'PY', 'GN', 'DM']:
+            raise ValueError(f'scheme type must be one of DP, PY, GN, DM. You provided {scheme_type}')
+
         if bar_h_items is None:
             bar_h_items = num_items
         if bar_h_users is None:
             bar_h_users = num_users  
         
         if scheme_type == 'DM':
-            if not isinstance(bar_h_users, int) or (bar_h_users <= 0) or (bar_h_users > num_users):
-                raise Exception('provide valid maximum number of clusters users for DM)')
-            if not isinstance(bar_h_items, int) or (bar_h_items <= 0) or (bar_h_items>num_items):
-                raise Exception('provide valid maximum number of clusters items for DM)')
-            if not isinstance(sigma, (int, float)) or sigma >= 0:
-                raise Exception('provide valid sigma (-item_clustering) parameter for DM')
+            if not isinstance(bar_h_users, int):
+                raise TypeError('maximum number of clusters users must be integer for DM')
+            if (bar_h_users <= 0) or (bar_h_users > num_users):
+                raise ValueError(f"maximum number of clusters for DM for users should be in (0, {num_users}]."
+                                 f". You provided {bar_h_users}")
+            if not isinstance(bar_h_items, int):
+                raise TypeError('maximum number of clusters items must be integer for DM')
+            if (bar_h_items <= 0) or (bar_h_items>num_items):
+                raise ValueError(f"maximum number of clusters for DM for items should be in (0, {num_items}]."
+                                 f". You provided {bar_h_items}")
+            if not isinstance(sigma, (int, float)):
+                raise TypeError('sigma must be a float or int for DM')
+            if sigma >= 0:
+                raise ValueError(f'sigma for DM should be negative. You provided {sigma}')
 
         if scheme_type == 'DP':
-            if not isinstance(scheme_param, (int, float)) or scheme_param <= 0:
-                raise Exception('provide valid concentration parameter for DP')
-        
+            if not isinstance(scheme_param, (int, float)):
+                raise TypeError('concentration parameter for DP must be float or int')
+            if scheme_param <= 0:
+                raise ValueError(f'concentration parameter for DP should be positive. You provided {scheme_param}')
+
         if scheme_type == 'PY':
-            if not isinstance(sigma, (int, float)) or (sigma < 0 or sigma >= 1):
-                raise Exception('provide sigma in [0, 1) for PY')
-            if not isinstance(scheme_param, (int, float)) or scheme_param <= -sigma:
-                raise Exception('provide valid user clustering parameter for PY')
+            if not isinstance(sigma, (int, float)):
+                raise TypeError('sigma must be a float or int for PY')
+            if (sigma < 0 or sigma >= 1):
+                raise ValueError(f'provide sigma in [0, 1) for PY. You provided {sigma}')
+            if not isinstance(scheme_param, (int, float)):
+                raise TypeError('scheme param must be a float or int for PY')
+            if not isinstance(scheme_param, (int, float)):
+                raise TypeError('scheme param must be a float or int for PY')
+            if scheme_param <= -sigma:
+                raise ValueError(f'scheme param should be < -sigma for PY. You provided {scheme_param}')
             if sigma == 0:
-                print('note: for sigma=0 the PY reduces to DP, use scheme_type=DP for greater efficiency')
+                warnings.warn('note: for sigma=0 the PY reduces to DP, use scheme_type=DP for greater efficiency')
+        
         if scheme_type == 'GN':
-            if not isinstance(gamma, float) or (gamma<=0 or gamma>= 1):
-                raise Exception('please provide valid gamma paramter for GN')
-            
+            if not isinstance(gamma, float):
+                raise TypeError(f'gamma should be a float. You provided {type(gamma)}')
+            if (gamma<=0 or gamma>= 1):
+                raise ValueError(f'gamma for GN should be in (0, 1). You provided {gamma}')
+
         if user_clustering is not None and user_clustering != 'random':
             if not isinstance(user_clustering, (list, np.ndarray)):
-                raise Exception('user clustering must be a list or array')
+                raise TypeError('user clustering must be a list or array')
             if len(user_clustering) != num_users:
-                raise Exception('user clustering length does not match number of users')
+                raise ValueError('user clustering length does not match number of users')
             if min(user_clustering) < 0:
-                raise Exception('user clustering must be non-negative integers')
-        
+                raise ValueError('user clustering must be non-negative integers')
+
         if item_clustering is not None and item_clustering != 'random':
             if not isinstance(item_clustering, (list, np.ndarray)):
-                raise Exception('item clustering must be a list or array')
+                raise ValueError('item clustering must be a list or array')
             if len(item_clustering) != num_items:
-                raise Exception('item clustering length does not match number of items')
+                raise ValueError('item clustering length does not match number of items')
             if min(item_clustering) < 0:
-                raise Exception('item clustering must be non-negative integers')
-        
+                raise ValueError('item clustering must be non-negative integers')
+
         if cov_users is not None:
             if not isinstance(cov_users, (list)):
-                raise Exception('covariates for users must be provided as a list of tuples')
+                raise TypeError('covariates for users must be provided as a list of tuples')
             for cov in cov_users:
                 if not isinstance(cov, tuple):
-                    raise Exception('each covariate for users must be provided as a tuple')
+                    raise TypeError('each covariate for users must be provided as a tuple')
                 if not isinstance(cov[0], str):
-                    raise Exception('covariate name and type for users must be provided as a string')
+                    raise TypeError('covariate name and type for users must be provided as a string')
                 if not isinstance(cov[1], (list, np.ndarray)):
-                    raise Exception('covariate values for users must be provided as a list or array')
+                    raise TypeError('covariate values for users must be provided as a list or array')
                 if len(cov[1]) != num_users:
-                    raise Exception(f'covariate length is {len(cov[1])} but should be {num_users}')
+                    raise ValueError(f'covariate length is {len(cov[1])} but should be {num_users}')
         if cov_items is not None:
             if not isinstance(cov_items, (list)):
-                raise Exception('covariates for items must be provided as a list of tuples')
+                raise TypeError('covariates for items must be provided as a list of tuples')
             for cov in cov_items:
                 if not isinstance(cov, tuple):
-                    raise Exception('each covariate for items must be provided as a tuple')
+                    raise TypeError('each covariate for items must be provided as a tuple')
                 if not isinstance(cov[0], str):
-                    raise Exception('covariate name and type for items must be provided as a string')
+                    raise TypeError('covariate name and type for items must be provided as a string')
                 if not isinstance(cov[1], (list, np.ndarray)):
-                    raise Exception('covariate values for items must be provided as a list or array')
+                    raise TypeError('covariate values for items must be provided as a list or array')
                 if len(cov[1]) != num_items:
-                    raise Exception(f'covariate length is {len(cov[1])} but should be {num_items}')
+                    raise ValueError(f'covariate length is {len(cov[1])} but should be {num_items}')
 
         self.seed = seed
         self.num_items = num_items
