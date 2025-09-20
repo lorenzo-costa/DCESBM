@@ -109,10 +109,10 @@ class TestIntegration:
         else:
             true_mod = esbm
         
-        params_dp = {'scheme_type': 'DP'}
-        params_py = {'scheme_type': 'PY',}
-        params_gn = {'scheme_type': 'GN',}
-        
+        params_dp = {'scheme_type': 'DP', 'degree_param_users': 5, 'degree_param_items': 5,}
+        params_py = {'scheme_type': 'PY', 'degree_param_users': 5, 'degree_param_items': 5,}
+        params_gn = {'scheme_type': 'GN', 'degree_param_users': 5, 'degree_param_items': 5,}
+
         params_list = [params_dp, params_py, params_gn, 
                        params_dp, params_py, params_gn]
 

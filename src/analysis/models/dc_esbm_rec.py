@@ -413,7 +413,7 @@ class dcesbm(Baseline):
             log_probs = compute_log_prob(probs=probs, 
                                          mhk_minus=mhk_minus, 
                                          frequencies_primary_minus=frequencies_items_minus, 
-                                         frequencies_secondary=frequencies_items, 
+                                         frequencies_secondary=frequencies_users, 
                                          y_values=np.ascontiguousarray(yih[i]), 
                                          max_clusters=K,
                                          epsilon=self.epsilon, 
