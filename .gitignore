@@ -3,7 +3,7 @@ __pycache__/
 
 data/processed/dataset_clean.csv
 data/raw/goodreads_interactions_dedup.json.gz
-
+.vscode/
 questions.txt
 package_import.py
 # do not track changes in intermediate files

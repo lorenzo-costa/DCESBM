@@ -17,9 +17,8 @@ def compute_prob_gpu(probs,
                           degree_node, 
                           degree_param, 
                           is_user_mode):
-    """
-    Function organizing GPU computation.
-    """
+    
+    """Function organizing GPU computation."""
 
     d_log_probs = cuda.to_device(np.zeros_like(probs))
     d_mhk_minus = cuda.to_device(mhk_minus)
@@ -62,9 +61,8 @@ def compute_prob_kernel(log_probs,
                         degree_node, 
                         degree_param, 
                         is_user_mode):
-    """
-    GPU kernel to compute sampling probabilities.
-    """
+    
+    """GPU kernel to compute sampling probabilities."""
     
     i = cuda.grid(1)
 
@@ -117,9 +115,9 @@ def compute_extra_prob_kernel(log_probs,
                               degree_corrected, 
                               degree_node, 
                               degree_param):
-    """
-    GPU kernel to compute the probability for a new cluster (H+1 case).
-    """
+    
+    """GPU kernel to compute the probability for a new cluster (H+1 case)."""
+    
     p_new = 0.0
     a_plus_epsilon = a + epsilon
     lgamma_a_log_b = - cuda.libdevice.lgamma(a) + a * np.log(b)
