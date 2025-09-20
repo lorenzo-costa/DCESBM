@@ -1,3 +1,4 @@
+from matplotlib.pylab import seed
 import pytest
 import sys
 from pathlib import Path
@@ -41,6 +42,19 @@ class TestIntegration:
             'device': 'cpu'
         }
         
+        self.runs_params = {
+            'n_users': 30,
+            'n_items': 30,
+            'num_clusters_users': 4,
+            'num_clusters_items': 4,
+            'n_runs': 1,
+            'n_iters': 100,
+            'burn_in': 25,
+            'thinning': 2,
+            'k': 5,
+            'n_runs': 1,
+        }
+        
     @pytest.mark.parametrize("scheme_type", ['DP', 'PY', 'GN'])
     def test_equality_of_llk_init(self, scheme_type):
         modelbaseline = Baseline(scheme_type=scheme_type, **self.valid_params)
@@ -69,6 +83,85 @@ class TestIntegration:
         dcesbmllk_final = outdcesbm[0][-1]
         assert esbmllk_final > baselinellk_final
         assert dcesbmllk_final > baselinellk_final
-    
-    
-         
+
+    @pytest.mark.parametrize("true_mod", ['dcesbm'])
+    def test_multiple_runs(self, true_mod):
+        
+        if true_mod == 'dcesbm':
+            true_mod = dcesbm
+        else:
+            true_mod = esbm
+        
+        n_users = 30
+        n_items = 30
+        num_clusters_users = 4
+        num_clusters_items = 4
+        
+        seed = 1
+        n_iters = 100
+        burn_in = 25
+        thinning = 2
+        k = 5
+        n_runs = 1
+        
+        params_init = {
+            'num_users': n_users,
+            'num_items': n_items,
+            'bar_h_users': num_clusters_users,
+            'bar_h_items': num_clusters_items,
+            'item_clustering': 'random',
+            'user_clustering': 'random',
+            'degree_param_users': 5,
+            'degree_param_items': 5,
+            'scheme_type': 'DM',
+            'seed': 42,
+            'sigma': -0.9
+        }
+        
+        params_dp = {'scheme_type': 'DP'}
+        params_py = {'scheme_type': 'PY',}
+        params_gn = {'scheme_type': 'GN',}
+        params_dp_cov = {'scheme_type':'DP'}
+        params_py_cov = {'scheme_type':'PY'}
+        params_gn_cov = {'scheme_type':'GN'}
+        
+        params_list = [params_dp, params_py, params_gn,
+                       params_dp_cov, params_py_cov, params_gn_cov,
+                        params_dp, params_py, params_gn, 
+                        params_dp_cov, params_py_cov, params_gn_cov]
+        
+        model_list = [dcesbm, dcesbm, dcesbm,
+                       dcesbm, dcesbm, dcesbm,
+                       esbm, esbm, esbm, esbm, esbm, esbm]
+        
+        model_names = ['dcesbm_dp', 'dcesbm_py', 'dcesbm_gn',
+                       'dcesbm_dp_cov', 'dcesbm_py_cov', 'dcesbm_gn_cov',
+                       'esbm_dp', 'esbm_py', 'esbm_gn',
+                       'esbm_dp_cov', 'esbm_py_cov', 'esbm_gn_cov']
+        
+        cov_places_users = [3,4,5]#, 9, 10, 11]
+        cov_places_items = [3,4,5]#, 9, 10, 11]
+        
+        out = multiple_runs(
+            true_mod=true_mod, 
+            params_init=params_init, 
+            num_users=n_users, 
+            num_items=n_items, 
+            num_clusters_users=num_clusters_users, 
+            num_clusters_items=num_clusters_items, 
+            n_runs=n_runs, 
+            n_iters=n_iters,
+            params_list=params_list, 
+            model_list=model_list, 
+            model_names=model_names, 
+            cov_places_users=cov_places_users, 
+            cov_places_items=cov_places_items, 
+            k=k, 
+            print_intermid=True, 
+            verbose=1, 
+            burn_in=burn_in, 
+            thinning=thinning, 
+            seed=seed)
+        
+        assert out is not None
+        

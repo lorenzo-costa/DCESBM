@@ -580,6 +580,19 @@ class dcesbm(Baseline):
         self.estimated_phi_users = phi_users
         self.estimated_phi_items = phi_items
     
+    ############
+    # estimating theta from posterior comutations
+    def estimate_theta(self):
+        if self.estimated_users is None or self.estimated_items is None:
+            raise Exception('cluster assignment must be estimated first')
+        
+        mhk = self._compute_mhk(self.user_clustering, self.item_clustering)
+        outer_prod = np.outer(self.frequencies_users, self.frequencies_items)
+        theta = (self.prior_a + mhk) / (self.prior_b + outer_prod)
+
+        self.estimated_theta = theta
+        return theta
+    
     def point_predict(self, pairs, seed=None):
         if seed is None:
             np.random.seed(self.seed)

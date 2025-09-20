@@ -55,7 +55,8 @@ class Baseline:
     degree_param_items : float
         degree-correction parameter for items (relevant only for DC model), by default 1
     alpha_c : float or list
-        additional parameter for categorical covariate model (if int defaults to vector of equal numbers), by default 1
+        additional parameter for categorical covariate model (if int defaults to 
+        vector of equal numbers), by default 1
     cov_users : list
         list of tuples (covname_covtype, covvalues) for user covariates, by default None
     cov_items : list
@@ -222,7 +223,7 @@ class Baseline:
                         
         if cov_users is not None:
             self.cov_names_users, self.cov_types_users, self.cov_values_users = self._process_cov(cov_users)
-    
+            
         if cov_items is not None:
             self.cov_names_items, self.cov_types_items, self.cov_values_items = self._process_cov(cov_items)
         
@@ -247,15 +248,20 @@ class Baseline:
         # theta not provided generate it
         if self.theta is None:
             np.random.seed(self.seed)
-            self.theta = np.random.gamma(self.prior_a, self.prior_b, size = (self.num_clusters_users, self.num_clusters_items))
+            self.theta = np.random.gamma(self.prior_a, self.prior_b, 
+                                         size = (self.num_clusters_users, self.num_clusters_items))
         
         # if there are covs compute nch
         if cov_users is not None:
-            self.cov_nch_users = self._compute_nch(self.cov_values_users, self.user_clustering, self.num_clusters_users)
+            self.cov_nch_users = self._compute_nch(self.cov_values_users, 
+                                                   self.user_clustering, 
+                                                   self.num_clusters_users)
         else:
             self.cov_nch_users = None
         if cov_items is not None:
-            self.cov_nch_items = self._compute_nch(self.cov_values_items, self.item_clustering, self.num_clusters_items)
+            self.cov_nch_items = self._compute_nch(self.cov_values_items, 
+                                                   self.item_clustering, 
+                                                   self.num_clusters_items)
         else:
             self.cov_nch_items = None
             
@@ -341,13 +347,14 @@ class Baseline:
                 # prior contribution
                 probs = sampling_scheme(V=V, 
                                         H=H, 
-                                        users_frequencies=users_frequencies, 
+                                        frequencies=users_frequencies, 
                                         bar_h=self.bar_h_users, 
                                         scheme_type=self.scheme_type,
                                         scheme_param=self.scheme_param, 
                                         sigma=self.sigma, 
                                         gamma=self.gamma)
                 
+                log_probs_cov = 0
                 if nch_users is not None:
                     log_probs_cov = compute_log_probs_cov(probs=probs, 
                                                           idx=u, 
@@ -414,13 +421,26 @@ class Baseline:
                     nch_items.append(temp.reshape(-1, 1))
                     
             for i in range(1, self.num_items):
-                probs = sampling_scheme(V, K, items_frequencies, bar_h=self.bar_h_items, scheme_type=self.scheme_type,
-                                        scheme_param=self.scheme_param, sigma=self.sigma, gamma=self.gamma)
+                probs = sampling_scheme(V=V, 
+                                        H=K, 
+                                        frequencies=items_frequencies, 
+                                        bar_h=self.bar_h_items, 
+                                        scheme_type=self.scheme_type,
+                                        scheme_param=self.scheme_param, 
+                                        sigma=self.sigma, 
+                                        gamma=self.gamma)
+                
                 log_probs_cov = 0
                 if nch_items is not None:
-                    log_probs_cov = compute_log_probs_cov(probs, i, self.cov_types_items, nch_items, self.cov_values_items, 
-                                                    items_frequencies, self.alpha_c, self.alpha_0)
-                
+                    log_probs_cov = compute_log_probs_cov(probs=probs, 
+                                                          idx=i, 
+                                                          cov_types=self.cov_types_items, 
+                                                          cov_nch=nch_items, 
+                                                          cov_values=self.cov_values_items,
+                                                          nh=items_frequencies,
+                                                          alpha_c=self.alpha_c, 
+                                                          alpha_0=self.alpha_0)
+
                 log_probs = np.log(probs+self.epsilon)+log_probs_cov
                 probs = np.exp(log_probs-max(log_probs))
                 probs = probs/probs.sum()
@@ -437,7 +457,8 @@ class Baseline:
                             temp = np.zeros(n_unique)
                             c = self.cov_values_items[cov][i]
                             temp[c] += 1
-                            nch_items[cov] = np.column_stack([nch_items[cov], temp.reshape(-1, 1)])
+                            nch_items[cov] = np.column_stack([nch_items[cov], 
+                                                              temp.reshape(-1, 1)])
                 else:
                     items_frequencies[assignment] += 1
                     if nch_items is not None:
@@ -569,7 +590,16 @@ class Baseline:
             cov_name, cov_type = cov[0].split('_')
             cov_names.append(cov_name)
             cov_types.append(cov_type)
-            cov_values.append(cov[1])             
+            cov_values.append(cov[1])  
+
+        if isinstance(self.alpha_c, (int, float)):
+            self.alpha_c = []
+            for i in range(len(cov_names)):
+                unique_cov_values = len(np.unique(cov_values[i]))
+                self.alpha_c.extend([self.alpha_c for _ in range(unique_cov_values)])
+            self.alpha_c = np.array(self.alpha_c)
+            self.alpha_0 = np.sum(self.alpha_c)
+
         return cov_names, cov_types, cov_values
      
     def _compute_nch(self, cov_values, clustering, n_clusters):
@@ -781,13 +811,16 @@ class Baseline:
         if method not in ['avg', 'comp', 'all']:
             raise Exception('invalid method')
         
-        cc_users, cc_items = self._compute_co_clustering_matrix(burn_in=burn_in, thinning=thinning)
+        cc_users, cc_items = self._compute_co_clustering_matrix(burn_in=burn_in, 
+                                                                thinning=thinning)
         
         psm_users = cc_users/np.max(cc_users)
         psm_items = cc_items/np.max(cc_items)
 
-        res_users = minVI(psm_users, cls_draw = self.mcmc_draws_users[burn_in::thinning], method=method, max_k=max_k)
-        res_items = minVI(psm_items, cls_draw = self.mcmc_draws_items[burn_in::thinning], method=method, max_k=max_k)
+        res_users = minVI(psm_users, cls_draw = self.mcmc_draws_users[burn_in::thinning], 
+                          method=method, max_k=max_k)
+        res_items = minVI(psm_items, cls_draw = self.mcmc_draws_items[burn_in::thinning], 
+                          method=method, max_k=max_k)
         
         est_cluster_users = res_users['cl']
         est_cluster_items = res_items['cl']
@@ -857,7 +890,8 @@ class Baseline:
         preds = []
         for u, i in pairs:
             # baseline: predict with predictive posterior mean
-            preds.append(np.random.choice(uniques_ratings, p=frequencies_ratings/np.sum(frequencies_ratings)))
+            preds.append(np.random.choice(uniques_ratings, 
+                                          p=frequencies_ratings/np.sum(frequencies_ratings)))
 
         return preds
     

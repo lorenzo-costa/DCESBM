@@ -100,7 +100,8 @@ def validate_models(Y_train,
         else:
             name = i
             
-        print('\nModel name:', name)
+        if verbose > 0:
+            print('\nModel name:', name)
         model_type = model_list[i]
         params = param_list[i]
         model = model_type(Y=Y_train, 
@@ -108,16 +109,19 @@ def validate_models(Y_train,
                            num_items=Y_train.shape[1], 
                            **params)
 
-        print('Starting training for model', name)
+        if verbose>0:
+            print('Starting training for model', name)
         _ = model.gibbs_train(n_iters, verbose=verbose)
         _ = model.estimate_cluster_assignment_vi(burn_in=burn_in, thinning=thinning)
-        
-        print('Starting prediction for model', name)
+
+        if verbose>0:
+            print('Starting prediction for model', name)
         model_ratings = model.point_predict(Y_val_pairs, seed=seed)
         mae_model = mean_absolute_error(Y_val_ratings, model_ratings)
         mse_model = mean_squared_error(Y_val_ratings, model_ratings)    
-        
-        print('Starting ranking for model', name)
+
+        if verbose>0:
+            print('Starting ranking for model', name)
         if k is None:
             ranks_model = model.predict_with_ranking(val_users_unique)
         else:
@@ -299,52 +303,31 @@ def multiple_runs(true_mod,
     
     for r in range(n_runs):
         np.random.seed(seed+r)
-        places = np.round(np.random.dirichlet(np.ones(num_clusters_users))*num_users)
-        
-        # test
-        if sum(places) != num_users:
-            places[0] += (num_users - sum(places))
-        
-        user_clustering = []
-        for i in range(len(places)):
-            # using >= (instead of >) here because otherwise it may include higher 
-            # numbers before lower number
-            # e.g. a clustering like 0,0,2,2,3 if 1 is not present it messes up stuff
-            while len(user_clustering) < num_users and places[i]>=0: 
-                user_clustering.append(i)
-                places[i]-=1
-        
-        temp = np.array([1 if user_clustering[i]%2==0 else 0 for i in range(num_users)])
-        cov_users = [('cov1_cat', temp.copy())]
-        
-        places = np.round(np.random.dirichlet(np.ones(num_clusters_items))*num_items)
-        
-        #test
-        if sum(places) != num_items:
-            places[0] += (num_items - sum(places))
-        
-        item_clustering = []
-        for i in range(len(places)):
-            while len(item_clustering) < num_items and places[i]>=0:
-                item_clustering.append(i)
-                places[i]-=1
-        
-        temp = np.array([1 if item_clustering[i]%2==0 else 0 for i in range(num_items)])
-        cov_items = [('cov1_cat', temp.copy())]
         
         if params_init is None:
             params_init = {}
-            params_init['user_clustering'] = user_clustering
-            params_init['item_clustering'] = item_clustering
-            params_init['cov_users'] = cov_users
-            params_init['cov_items'] = cov_items        
-            params_init['seed'] = seed+r
+            params_init['user_clustering'] = 'random'
+            params_init['item_clustering'] = 'random'
+            params_init['cov_users'] = None
+            params_init['cov_items'] = None
         
         true_model = true_mod(**params_init)
         
         Y_train, Y_val = generate_val_set(true_model.Y, size=0.1, seed=42, only_observed=False)
         true_users = true_model.user_clustering.copy()
         true_items = true_model.item_clustering.copy()
+        
+    
+        # generate binary covariate following clustering + flip 10% of values
+        temp = np.array([True if true_users[i]%2==0 else False for i in range(num_users)])
+        idxs = np.random.choice(num_users, size=int(0.1*num_users), replace=False)
+        temp[idxs] = ~temp[idxs]
+        cov_users = [('cov1_cat', temp.astype(int).copy())]
+        
+        temp = np.array([True if true_items[i]%2==0 else False for i in range(num_items)])
+        idxs = np.random.choice(num_items, size=int(0.1*num_items), replace=False)
+        temp[idxs] = ~temp[idxs]
+        cov_items = [('cov1_cat', temp.astype(int).copy())]
         
         if cov_places_users is not None:
             for place in cov_places_users:
