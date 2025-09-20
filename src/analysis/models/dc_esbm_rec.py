@@ -281,6 +281,7 @@ class dcesbm(Baseline):
                                          is_user_mode=True) 
             
             if nch is not None:
+                print('using covariates')
                 log_probs_cov = compute_log_probs_cov(probs, 
                                                       idx=u, 
                                                       cov_types=self.cov_types_users, 
@@ -412,7 +413,7 @@ class dcesbm(Baseline):
             log_probs = compute_log_prob(probs=probs, 
                                          mhk_minus=mhk_minus, 
                                          frequencies_primary_minus=frequencies_items_minus, 
-                                         frequencies_secondary=frequencies_users, 
+                                         frequencies_secondary=frequencies_items, 
                                          y_values=np.ascontiguousarray(yih[i]), 
                                          max_clusters=K,
                                          epsilon=self.epsilon, 
@@ -505,9 +506,10 @@ class dcesbm(Baseline):
         assert len(self.user_clustering)==len(self.degree_users)
         
         ll = self.compute_log_likelihood()
-        
-        print('starting log likelihood', ll)
-        
+
+        if verbose>0:
+            print('starting log likelihood', ll)
+
         llks = np.zeros(n_iters+1)
         user_cluster_list = np.zeros((n_iters+1, self.num_users), dtype=np.int32)
         item_cluster_list = np.zeros((n_iters+1, self.num_items), dtype=np.int32)
@@ -526,7 +528,6 @@ class dcesbm(Baseline):
         
         check = time.time()
         for it in range(n_iters):
-            
             self.gibbs_step()
             ll = self.compute_log_likelihood()
             
@@ -537,7 +538,6 @@ class dcesbm(Baseline):
             frequencies_items_list.append(self.frequencies_items.copy())
             degree_users_list.append(self.degree_users.copy())
             degree_items_list.append(self.degree_items.copy())
-            
             
             if verbose >= 1:
                 if it % (n_iters // 10) == 0:
@@ -553,7 +553,8 @@ class dcesbm(Baseline):
                         print('user cluser ', self.user_clustering)
                         print('item cluster ', self.item_clustering)
         
-        print('end llk: ', llks[-1])
+        if verbose>0:
+            print('end llk: ', llks[-1])
         self.train_llk = llks
         self.mcmc_draws_users = user_cluster_list
         self.mcmc_draws_items = item_cluster_list
