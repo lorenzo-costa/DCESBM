@@ -285,7 +285,7 @@ class dcesbm(Baseline):
                 log_probs_cov = compute_log_probs_cov(probs, 
                                                       idx=u, 
                                                       cov_types=self.cov_types_users, 
-                                                      cov_nch=nch_minus, 
+                                                      cov_nch=np.array(nch_minus), 
                                                       cov_values=self.cov_values_users, 
                                                       nh=frequencies_users_minus, 
                                                       alpha_c=self.alpha_c, 
@@ -430,7 +430,7 @@ class dcesbm(Baseline):
                 log_probs_cov = compute_log_probs_cov(probs, 
                                                       idx=i, 
                                                       cov_types=self.cov_types_items, 
-                                                      cov_nch=nch_minus, 
+                                                      cov_nch=np.array(nch_minus), 
                                                       cov_values=self.cov_values_items, 
                                                       nh=frequencies_items_minus, 
                                                       alpha_c=self.alpha_c, 
@@ -499,7 +499,7 @@ class dcesbm(Baseline):
         self.frequencies_items = frequencies_items
         return
     
-    def gibbs_train(self, n_iters, verbose=0, degree_corrected=True):
+    def gibbs_train(self, n_iters, verbose=0):
         np.random.seed(self.seed)
         
         self.n_iters = n_iters
@@ -538,6 +538,7 @@ class dcesbm(Baseline):
             frequencies_items_list.append(self.frequencies_items.copy())
             degree_users_list.append(self.degree_users.copy())
             degree_items_list.append(self.degree_items.copy())
+            
             
             if verbose >= 1:
                 if it % (n_iters // 10) == 0:

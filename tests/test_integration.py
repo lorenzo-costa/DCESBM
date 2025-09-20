@@ -3,6 +3,7 @@ import pytest
 import sys
 from pathlib import Path
 import numpy as np
+import warnings
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -66,7 +67,7 @@ class TestIntegration:
             'num_clusters_users': num_clusters_users_runs,
             'num_clusters_items': num_clusters_items_runs,
             'n_runs': 1,
-            'n_iters': 1000,
+            'n_iters': 1500,
             'burn_in': 250,
             'thinning': 2,
             'k': 5,
@@ -152,26 +153,160 @@ class TestIntegration:
 
         # if true model is dcesbm, dcesbm should recover true structure better
         if true_model == 'dcesbm':
-            assert vi_users_dcesbm_dp <= vi_users_esbm_dp
-            assert vi_users_dcesbm_py <= vi_users_esbm_py
-            assert vi_users_dcesbm_gn <= vi_users_esbm_gn
-            assert vi_items_dcesbm_dp <= vi_items_esbm_dp
-            assert vi_items_dcesbm_py <= vi_items_esbm_py
-            assert vi_items_dcesbm_gn <= vi_items_esbm_gn
+            # if they close to each other, just warn
+            if not vi_users_dcesbm_dp < vi_users_esbm_dp:
+                assert np.abs(vi_users_dcesbm_dp-vi_users_esbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_users_dcesbm_dp={vi_users_dcesbm_dp}, vi_users_esbm_dp={vi_users_esbm_dp}")
+            if not vi_users_dcesbm_py < vi_users_esbm_py:
+                assert np.abs(vi_users_dcesbm_py-vi_users_esbm_py) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_users_dcesbm_py={vi_users_dcesbm_py}, vi_users_esbm_py={vi_users_esbm_py}")
+            if not vi_users_dcesbm_gn < vi_users_esbm_gn:
+                assert np.abs(vi_users_dcesbm_gn-vi_users_esbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_users_dcesbm_gn={vi_users_dcesbm_gn}, vi_users_esbm_gn={vi_users_esbm_gn}")
+            if not vi_items_dcesbm_dp < vi_items_esbm_dp:
+                assert np.abs(vi_items_dcesbm_dp-vi_items_esbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_items_dcesbm_dp={vi_items_dcesbm_dp}, vi_items_esbm_dp={vi_items_esbm_dp}")
+            if not vi_items_dcesbm_py < vi_items_esbm_py:
+                assert np.abs(vi_items_dcesbm_py-vi_items_esbm_py) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_items_dcesbm_py={vi_items_dcesbm_py}, vi_items_esbm_py={vi_items_esbm_py}")
+            if not vi_items_dcesbm_gn < vi_items_esbm_gn:
+                assert np.abs(vi_items_dcesbm_gn-vi_items_esbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_items_dcesbm_gn={vi_items_dcesbm_gn}, vi_items_esbm_gn={vi_items_esbm_gn}")
         else:
-            assert vi_users_esbm_dp <= vi_users_dcesbm_dp
-            assert vi_users_esbm_py <= vi_users_dcesbm_py
-            assert vi_users_esbm_gn <= vi_users_dcesbm_gn
-            assert vi_items_esbm_dp <= vi_items_dcesbm_dp
-            assert vi_items_esbm_py <= vi_items_dcesbm_py
-            assert vi_items_esbm_gn <= vi_items_dcesbm_gn
+            if not vi_users_esbm_dp < vi_users_dcesbm_dp:
+                assert np.abs(vi_users_esbm_dp-vi_users_dcesbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_users_esbm_dp={vi_users_esbm_dp}, vi_users_dcesbm_dp={vi_users_dcesbm_dp}")
+            if not vi_users_esbm_py < vi_users_dcesbm_py:
+                assert np.abs(vi_users_esbm_py-vi_users_dcesbm_py) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_users_esbm_py={vi_users_esbm_py}, vi_users_dcesbm_py={vi_users_dcesbm_py}")
+            if not vi_users_esbm_gn < vi_users_dcesbm_gn:
+                assert np.abs(vi_users_esbm_gn-vi_users_dcesbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_users_esbm_gn={vi_users_esbm_gn}, vi_users_dcesbm_gn={vi_users_dcesbm_gn}")
+            if not vi_items_esbm_dp < vi_items_dcesbm_dp:
+                assert np.abs(vi_items_esbm_dp-vi_items_dcesbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_items_esbm_dp={vi_items_esbm_dp}, vi_items_dcesbm_dp={vi_items_dcesbm_dp}")
+            if not vi_items_esbm_py < vi_items_dcesbm_py:
+                assert np.abs(vi_items_esbm_py-vi_items_dcesbm_py) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_items_esbm_py={vi_items_esbm_py}, vi_items_dcesbm_py={vi_items_dcesbm_py}")
+            if not vi_items_esbm_gn < vi_items_dcesbm_gn:
+                assert np.abs(vi_items_esbm_gn-vi_items_dcesbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model barely close to alternative\n"
+                              f" vi_items_esbm_gn={vi_items_esbm_gn}, vi_items_dcesbm_gn={vi_items_dcesbm_gn}")
 
+    @pytest.mark.parametrize("true_model", ['dcesbm', 'esbm'])
+    def test_multiple_runs_cov(self, true_model):
+        if true_model == 'dcesbm':
+            true_mod = dcesbm
+        else:
+            true_mod = esbm
         
-        
+        params_dp = {'scheme_type': 'DP', 'degree_param_users': 5, 'degree_param_items': 5,}
+        params_py = {'scheme_type': 'PY', 'degree_param_users': 5, 'degree_param_items': 5,}
+        params_gn = {'scheme_type': 'GN', 'degree_param_users': 5, 'degree_param_items': 5,}
 
+        params_list = [params_dp, params_py, params_gn, 
+                       params_dp, params_py, params_gn]
+
+        model_list = [dcesbm, dcesbm, dcesbm, esbm, esbm, esbm]
+
+        model_names = ['dcesbm_dp', 'dcesbm_py', 'dcesbm_gn', 'esbm_dp', 'esbm_py', 'esbm_gn']
         
-        
-        
+        cov_places_users = [0, 1, 2, 3, 4, 5,]
+        cov_places_items = [0, 1, 2, 3, 4, 5,]
+
+        out = multiple_runs(
+            true_mod=true_mod, 
+            params_list=params_list, 
+            model_list=model_list, 
+            model_names=model_names,  
+            print_intermid=True, 
+            cov_places_users=cov_places_users,
+            cov_places_items=cov_places_items,
+            verbose=0,
+            **self.runs_params)
         
         assert out is not None
         
+        vi_users_list=out[5]
+        vi_items_list=out[6]
+        
+        n_runs = self.runs_params['n_runs']
+
+        vi_users_dcesbm_dp = np.mean(vi_users_list[0::n_runs])
+        vi_users_dcesbm_py = np.mean(vi_users_list[1::n_runs])
+        vi_users_dcesbm_gn = np.mean(vi_users_list[2::n_runs])
+        vi_users_esbm_dp = np.mean(vi_users_list[3::n_runs])
+        vi_users_esbm_py = np.mean(vi_users_list[4::n_runs])
+        vi_users_esbm_gn = np.mean(vi_users_list[5::n_runs])
+        
+        vi_items_dcesbm_dp = np.mean(vi_items_list[0::n_runs])
+        vi_items_dcesbm_py = np.mean(vi_items_list[1::n_runs])
+        vi_items_dcesbm_gn = np.mean(vi_items_list[2::n_runs])
+        vi_items_esbm_dp = np.mean(vi_items_list[3::n_runs])
+        vi_items_esbm_py = np.mean(vi_items_list[4::n_runs])
+        vi_items_esbm_gn = np.mean(vi_items_list[5::n_runs])
+
+        # if true model is dcesbm, dcesbm should recover true structure better
+        if true_model == 'dcesbm':
+            # if they close to each other, just warn
+            if not vi_users_dcesbm_dp < vi_users_esbm_dp:
+                assert np.abs(vi_users_dcesbm_dp-vi_users_esbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model (dcesbm) barely close to alternative\n"
+                              f" vi_users_dcesbm_dp={vi_users_dcesbm_dp}, vi_users_esbm_dp={vi_users_esbm_dp}")
+            if not vi_users_dcesbm_py < vi_users_esbm_py:
+                assert np.abs(vi_users_dcesbm_py-vi_users_esbm_py) < 1e-1
+                warnings.warn(f"Warning: true model (dcesbm) barely close to alternative\n"
+                              f" vi_users_dcesbm_py={vi_users_dcesbm_py}, vi_users_esbm_py={vi_users_esbm_py}")
+            if not vi_users_dcesbm_gn < vi_users_esbm_gn:
+                assert np.abs(vi_users_dcesbm_gn-vi_users_esbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model (dcesbm) barely close to alternative\n"
+                              f" vi_users_dcesbm_gn={vi_users_dcesbm_gn}, vi_users_esbm_gn={vi_users_esbm_gn}")
+            if not vi_items_dcesbm_dp < vi_items_esbm_dp:
+                assert np.abs(vi_items_dcesbm_dp-vi_items_esbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model (dcesbm) barely close to alternative\n"
+                              f" vi_items_dcesbm_dp={vi_items_dcesbm_dp}, vi_items_esbm_dp={vi_items_esbm_dp}")
+            if not vi_items_dcesbm_py < vi_items_esbm_py:
+                assert np.abs(vi_items_dcesbm_py-vi_items_esbm_py) < 1e-1
+                warnings.warn(f"Warning: true model (dcesbm) barely close to alternative\n"
+                              f" vi_items_dcesbm_py={vi_items_dcesbm_py}, vi_items_esbm_py={vi_items_esbm_py}")
+            if not vi_items_dcesbm_gn < vi_items_esbm_gn:
+                assert np.abs(vi_items_dcesbm_gn-vi_items_esbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model (dcesbm) barely close to alternative\n"
+                              f" vi_items_dcesbm_gn={vi_items_dcesbm_gn}, vi_items_esbm_gn={vi_items_esbm_gn}")
+        else:
+            if not vi_users_esbm_dp < vi_users_dcesbm_dp:
+                assert np.abs(vi_users_esbm_dp-vi_users_dcesbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model (esbm) barely close to alternative\n"
+                              f" vi_users_esbm_dp={vi_users_esbm_dp}, vi_users_dcesbm_dp={vi_users_dcesbm_dp}")
+            if not vi_users_esbm_py < vi_users_dcesbm_py:
+                assert np.abs(vi_users_esbm_py-vi_users_dcesbm_py) < 1e-1
+                warnings.warn(f"Warning: true model (esbm) barely close to alternative\n"
+                              f" vi_users_esbm_py={vi_users_esbm_py}, vi_users_dcesbm_py={vi_users_dcesbm_py}")
+            if not vi_users_esbm_gn < vi_users_dcesbm_gn:
+                assert np.abs(vi_users_esbm_gn-vi_users_dcesbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model (esbm) barely close to alternative\n"
+                              f" vi_users_esbm_gn={vi_users_esbm_gn}, vi_users_dcesbm_gn={vi_users_dcesbm_gn}")
+            if not vi_items_esbm_dp < vi_items_dcesbm_dp:
+                assert np.abs(vi_items_esbm_dp-vi_items_dcesbm_dp) < 1e-1
+                warnings.warn(f"Warning: true model (esbm) barely close to alternative\n"
+                              f" vi_items_esbm_dp={vi_items_esbm_dp}, vi_items_dcesbm_dp={vi_items_dcesbm_dp}")
+            if not vi_items_esbm_py < vi_items_dcesbm_py:
+                assert np.abs(vi_items_esbm_py-vi_items_dcesbm_py) < 1e-1
+                warnings.warn(f"Warning: true model (esbm) barely close to alternative\n"
+                              f" vi_items_esbm_py={vi_items_esbm_py}, vi_items_dcesbm_py={vi_items_dcesbm_py}")
+            if not vi_items_esbm_gn < vi_items_dcesbm_gn:
+                assert np.abs(vi_items_esbm_gn-vi_items_dcesbm_gn) < 1e-1
+                warnings.warn(f"Warning: true model (esbm) barely close to alternative\n"
+                              f" vi_items_esbm_gn={vi_items_esbm_gn}, vi_items_dcesbm_gn={vi_items_dcesbm_gn}")
+

@@ -628,7 +628,7 @@ class Baseline:
             self.alpha_c = np.array(temp)
             self.alpha_0 = np.sum(self.alpha_c)
             
-        return cov_names, cov_types, cov_values
+        return np.array(cov_names), np.array(cov_types), np.array(cov_values)
      
     def _compute_nch(self, cov_values, clustering, n_clusters):
         """Computes the NCH matrix.
@@ -656,8 +656,7 @@ class Baseline:
                 for c in uniques:
                     nch[c, h] = (cov_values[cov][mask]==c).sum()    
             cov_nch.append(nch)
-        return cov_nch
-    
+        return np.array(cov_nch)
     
     def gibbs_step(self):
         """Performs a Gibbs sampling step.
