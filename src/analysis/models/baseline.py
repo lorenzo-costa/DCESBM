@@ -41,15 +41,15 @@ class Baseline:
         prior type. Possible choices are DP (dirichlet process), PY (pitman-yor process), 
         GN (gnedin process), DM (dirichlet-multinomial model)
     scheme_param : float
-        additional parameter for cluster prior, by default None
+        additional parameter for cluster prior, by default 1
     sigma : float
-        sigma parameter for Gibbs-type prior, by default None
+        sigma parameter for Gibbs-type prior, by default 1
     gamma : float
         additional parameter for GN model, by default None
     bar_h_users : int
-        maximum number of clusters for DM model, by default None
+        maximum number of clusters for DM model, if None set to num_users
     bar_h_items : int
-        maximum number of clusters for DM model, by default None
+        maximum number of clusters for DM model, if None set to num_items
     degree_param_users : float
         degree-correction parameter for users (relevant only for DC model), by default 1
     degree_param_items : float
@@ -104,9 +104,9 @@ class Baseline:
                  prior_a=1, 
                  prior_b=1, 
                  scheme_type = None, 
-                 scheme_param = None, 
-                 sigma = None, 
-                 gamma=None,
+                 scheme_param = 1, 
+                 sigma = 0.1, 
+                 gamma=0.5,
                  bar_h_users=None, 
                  bar_h_items=None, 
                  degree_param_users=1, 
@@ -134,7 +134,15 @@ class Baseline:
             raise Exception('please provide valid prior b parameter (>0)')
 
         if scheme_type is None:
-            raise Exception('please provide scheme type')        
+            raise Exception('please provide scheme type')    
+        
+        if scheme_type not in ['DP', 'PY', 'GN', 'DM']:
+            raise Exception('scheme type must be one of DP, PY, GN, DM')  
+        
+        if bar_h_items is None:
+            bar_h_items = num_items
+        if bar_h_users is None:
+            bar_h_users = num_users  
         
         if scheme_type == 'DM':
             if not isinstance(bar_h_users, int) or (bar_h_users <= 0) or (bar_h_users > num_users):
@@ -213,40 +221,41 @@ class Baseline:
         self.estimated_theta = None
                         
         if cov_users is not None:
-            self.cov_names_users, self.cov_types_users, self.cov_values_users = self.process_cov(cov_users)
+            self.cov_names_users, self.cov_types_users, self.cov_values_users = self._process_cov(cov_users)
     
         if cov_items is not None:
-            self.cov_names_items, self.cov_types_items, self.cov_values_items = self.process_cov(cov_items)
+            self.cov_names_items, self.cov_types_items, self.cov_values_items = self._process_cov(cov_items)
         
         # if clustering structure not provided create it
         if user_clustering is None:
                 self.user_clustering = [i for i in range(self.num_users)]    
         elif user_clustering == 'random':
-            self.init_cluster_random('random', None)
+            self._init_cluster_random('random', None)
         else:
             self.user_clustering=user_clustering
             
         if item_clustering is None:
             self.item_clustering = [i for i in range(self.num_items)]
         elif item_clustering=='random':
-            self.init_cluster_random(None, 'random')
+            self._init_cluster_random(None, 'random')
         else:
             self.item_clustering=item_clustering
         
         #computes cluster metrics needed later 
-        self.process_clusters(self.user_clustering, self.item_clustering)
-        
+        self._process_clusters(self.user_clustering, self.item_clustering)
+         
         # theta not provided generate it
         if self.theta is None:
-            self.theta = np.random.gamma(1,1, size = (self.num_clusters_users, self.num_clusters_items))
+            np.random.seed(self.seed)
+            self.theta = np.random.gamma(self.prior_a, self.prior_b, size = (self.num_clusters_users, self.num_clusters_items))
         
         # if there are covs compute nch
         if cov_users is not None:
-            self.cov_nch_users = self.compute_nch(self.cov_values_users, self.user_clustering, self.num_clusters_users)
+            self.cov_nch_users = self._compute_nch(self.cov_values_users, self.user_clustering, self.num_clusters_users)
         else:
             self.cov_nch_users = None
         if cov_items is not None:
-            self.cov_nch_items = self.compute_nch(self.cov_values_items, self.item_clustering, self.num_clusters_items)
+            self.cov_nch_items = self._compute_nch(self.cov_values_items, self.item_clustering, self.num_clusters_items)
         else:
             self.cov_nch_items = None
             
@@ -258,7 +267,7 @@ class Baseline:
             self.Y = Y
         
 
-    def process_clusters(self, user_clustering, item_clustering):
+    def _process_clusters(self, user_clustering, item_clustering):
         """Computes cluster metrics.
 
         Parameters
@@ -281,8 +290,7 @@ class Baseline:
     
     
     def generate_data(self):
-        """Generates random data according to the model.
-        """
+        """Generates random data according to the SBM model."""
         
         np.random.seed(self.seed)
         # Y params collects the appropriate theta entries accoridng to cluster structure
@@ -291,7 +299,7 @@ class Baseline:
         self.Y = Y.copy()
         return
     
-    def init_cluster_random(self, user_clustering=None, item_clustering=None):
+    def _init_cluster_random(self, user_clustering=None, item_clustering=None):
         """Initialises random clustering structure according to the prior.
 
         Parameters
@@ -331,16 +339,31 @@ class Baseline:
                     
             for u in range(1, self.num_users):
                 # prior contribution
-                probs = sampling_scheme(V, H, users_frequencies, bar_h=self.bar_h_users, scheme_type=self.scheme_type,
-                                        scheme_param=self.scheme_param, sigma=self.sigma, gamma=self.gamma)
-                log_probs_cov = 0
-                if nch_users is not None:
-                    log_probs_cov = compute_log_probs_cov(probs, u, self.cov_types_users, nch_users, self.cov_values_users, 
-                                                    users_frequencies, self.alpha_c, self.alpha_0)
+                probs = sampling_scheme(V=V, 
+                                        H=H, 
+                                        users_frequencies=users_frequencies, 
+                                        bar_h=self.bar_h_users, 
+                                        scheme_type=self.scheme_type,
+                                        scheme_param=self.scheme_param, 
+                                        sigma=self.sigma, 
+                                        gamma=self.gamma)
                 
-                # convert back using exp and normalise. max trick used for numerical stability
-                log_probs = np.log(probs+self.epsilon)+log_probs_cov
-                probs = np.exp(log_probs-max(log_probs))
+                if nch_users is not None:
+                    log_probs_cov = compute_log_probs_cov(probs=probs, 
+                                                          idx=u, 
+                                                          cov_types=self.cov_types_users, 
+                                                          cov_nch=nch_users, 
+                                                          cov_values=self.cov_values_users, 
+                                                          nh=users_frequencies, 
+                                                          alpha_c=self.alpha_c, 
+                                                          alpha_0=self.alpha_0)
+                     
+                    
+                    
+                
+                # convert back using exp and normalise
+                probs = np.log(probs+self.epsilon)+log_probs_cov
+                probs = np.exp(probs-max(probs))
                 probs = probs/probs.sum()
                 
                 assignment = np.random.choice(len(probs), p=probs)
@@ -400,7 +423,7 @@ class Baseline:
                 
                 log_probs = np.log(probs+self.epsilon)+log_probs_cov
                 probs = np.exp(log_probs-max(log_probs))
-                probs /= probs.sum()
+                probs = probs/probs.sum()
                             
                 assignment = np.random.choice(len(probs), p=probs)
                 if assignment >= K:
@@ -433,7 +456,7 @@ class Baseline:
         
         return user_clustering, item_clustering
     
-    def compute_mhk(self, user_clustering=None, item_clustering=None):
+    def _compute_mhk(self, user_clustering=None, item_clustering=None):
         """Computes the MHK matrix using (fast) sparse matrix multiplication.
 
         Parameters
@@ -465,6 +488,9 @@ class Baseline:
             num_items = len(item_clustering)
             num_clusters_items = len(np.unique(item_clustering))
         
+        #using sparse matrices for speed, this sums up entries of 
+        # Y in depending on their block assignment. 
+        # m[h,k] is the sum of entries for blocks (h, k)
         user_clusters = sparse.csr_matrix(
             (np.ones(num_users),
             (range(num_users),
@@ -480,7 +506,7 @@ class Baseline:
         mhk = user_clusters.T @ self.Y @ item_clusters
         return mhk
      
-    def compute_yuk(self):
+    def _compute_yuk(self):
         """Computes the YUK matrix.
 
         Returns
@@ -488,6 +514,9 @@ class Baseline:
         yuk : np.array
             YUK matrix
         """
+        # using sparse matrices for speed, this sums up entries of
+        # Y in depending on their block assignment.
+        # y[u,k] is the sum of entries for user u and cluster k (in items)
         item_clusters = sparse.csr_matrix(
             (np.ones(self.num_items),
             (range(self.num_items),
@@ -497,7 +526,7 @@ class Baseline:
         yuk = self.Y @ item_clusters
         return yuk
     
-    def compute_yih(self):
+    def _compute_yih(self):
         """Computes the YIH matrix.
 
         Returns
@@ -505,6 +534,9 @@ class Baseline:
         yih : np.array
             YIH matrix
         """
+        # using sparse matrices for speed, this sums up entries of
+        # Y in depending on their block assignment.
+        # y[i,h] is the sum of entries for item i and cluster h (in users)
         user_clusters = sparse.csr_matrix(
             (np.ones(self.num_users),
             (range(self.num_users),
@@ -515,7 +547,7 @@ class Baseline:
         return yih
     
     
-    def process_cov(self, cov_list):
+    def _process_cov(self, cov_list):
         """Processes a list of covariates.
 
         Parameters
@@ -540,7 +572,7 @@ class Baseline:
             cov_values.append(cov[1])             
         return cov_names, cov_types, cov_values
      
-    def compute_nch(self, cov_values, clustering, n_clusters):
+    def _compute_nch(self, cov_values, clustering, n_clusters):
         """Computes the NCH matrix.
 
         Parameters
@@ -575,6 +607,31 @@ class Baseline:
         # do nothing for baseline
         return
     
+    def compute_log_likelihood(self):
+        """Computes the log-likelihood of the model.
+
+        Returns
+        -------
+        float
+            Log-likelihood value
+        """
+        ll = compute_log_likelihood(
+            nh=self.frequencies_users, 
+            nk=self.frequencies_items,
+            a=self.prior_a, 
+            b=self.prior_b, 
+            eps=self.epsilon,
+            mhk=self._compute_mhk(),
+            user_clustering=self.user_clustering, 
+            item_clustering=self.item_clustering,
+            dg_u=np.zeros(self.num_users), 
+            dg_i=np.zeros(self.num_items), 
+            dg_cl_i=np.zeros(self.num_clusters_items), 
+            dg_cl_u=np.zeros(self.num_clusters_users), 
+            degree_corrected=False)
+        
+        return ll
+    
     def gibbs_train(self, n_iters, verbose=0):
         """Trains the model using Gibbs sampling.
 
@@ -597,15 +654,7 @@ class Baseline:
         
         self.n_iters = n_iters
         
-        ll = compute_log_likelihood(nh = self.frequencies_users, nk = self.frequencies_items, a = self.prior_a, 
-                                         b = self.prior_b, eps = self.epsilon, mhk=self.compute_mhk(), 
-                                         user_clustering=self.user_clustering, 
-                                        item_clustering=self.item_clustering,
-                                        dg_u=np.zeros(self.num_users), 
-                                        dg_i=np.zeros(self.num_items), 
-                                        dg_cl_i=np.zeros(self.num_clusters_items), 
-                                        dg_cl_u=np.zeros(self.num_clusters_users),
-                                        degree_corrected=False)
+        ll = self.compute_log_likelihood()
         
         print('starting log likelihood', ll)
         llks = np.zeros(n_iters+1)
@@ -623,15 +672,8 @@ class Baseline:
         for it in range(n_iters):
     
             self.gibbs_step()
-            ll = compute_log_likelihood(nh = self.frequencies_users, nk = self.frequencies_items,a = self.prior_a, 
-                                        b = self.prior_b, eps = self.epsilon,mhk = self.compute_mhk(),
-                                        user_clustering=self.user_clustering, 
-                                        item_clustering=self.item_clustering,
-                                        dg_u=np.zeros(self.num_users), 
-                                        dg_i=np.zeros(self.num_items), 
-                                        dg_cl_i=np.zeros(self.num_clusters_items), 
-                                        dg_cl_u=np.zeros(self.num_clusters_users), 
-                                        degree_corrected=False)
+            ll = self.compute_log_likelihood()
+            
             llks[it+1] += ll
             user_cluster_list[it+1] += self.user_clustering
             item_cluster_list[it+1] += self.item_clustering
@@ -739,7 +781,7 @@ class Baseline:
         if method not in ['avg', 'comp', 'all']:
             raise Exception('invalid method')
         
-        cc_users, cc_items = self.compute_co_clustering_matrix(burn_in=burn_in, thinning=thinning)
+        cc_users, cc_items = self._compute_co_clustering_matrix(burn_in=burn_in, thinning=thinning)
         
         psm_users = cc_users/np.max(cc_users)
         psm_items = cc_items/np.max(cc_items)
@@ -772,7 +814,7 @@ class Baseline:
     
     
     
-    def compute_co_clustering_matrix(self, burn_in=0, thinning=1):
+    def _compute_co_clustering_matrix(self, burn_in=0, thinning=1):
         """Aux function to call the optimised function on relevant sample"""
         if self.mcmc_draws_users is None:
             raise Exception('model must be trained first')

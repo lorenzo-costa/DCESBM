@@ -33,7 +33,7 @@ class esbm(Baseline):
         prior type. Possible choices are DP (dirichlet process), PY (pitman-yor process), 
         GN (gnedin process), DM (dirichlet-multinomial model)
     scheme_param : float
-        additional parameter for cluster prior, by default None
+        additional parameter for cluster prior, by default 1
     sigma : float
         sigma parameter for Gibbs-type prior, by default None
     gamma : float
@@ -96,9 +96,9 @@ class esbm(Baseline):
                  prior_a=1, 
                  prior_b=1, 
                  scheme_type = None, 
-                 scheme_param = None, 
-                 sigma = None, 
-                 gamma=None,
+                 scheme_param = 1, 
+                 sigma = 0.1, 
+                 gamma=0.5,
                  bar_h_users=None, 
                  bar_h_items=None, 
                  degree_param_users=1, 
@@ -126,8 +126,8 @@ class esbm(Baseline):
         # step for users
         #################################################
 
-        mhk = self.compute_mhk()
-        yuk = self.compute_yuk()
+        mhk = self._compute_mhk()
+        yuk = self._compute_yuk()
 
         H = self.num_clusters_users
         V = self.num_users        
@@ -192,12 +192,11 @@ class esbm(Baseline):
                                          is_user_mode=True, 
                                          degree_corrected=False, 
                                          degree_param=1, 
-                                         degree_cluster_minus=[1], 
+                                         degree_cluster_minus=np.array([1]), 
                                          degree_node=1, 
                                          device=self.device)
             
             # compute covs part       
-            log_probs_cov = 0
             if nch is not None:
                 log_probs_cov = compute_log_probs_cov(probs, 
                                                       idx=u, 
@@ -207,9 +206,10 @@ class esbm(Baseline):
                                                       nh=frequencies_users_minus, 
                                                       alpha_c=self.alpha_c, 
                                                       alpha_0=self.alpha_0)
+                log_probs = log_probs + log_probs_cov
 
             # sum and use exp trick for stability
-            probs = np.log(probs+self.epsilon)+log_probs + log_probs_cov
+            probs = np.log(probs+self.epsilon)+log_probs
             probs = np.exp(probs-max(probs))
             probs = probs/probs.sum()
 
@@ -281,8 +281,8 @@ class esbm(Baseline):
         K = self.num_clusters_items
         V = self.num_items
 
-        yih = self.compute_yih()
-        mhk = self.compute_mhk()
+        yih = self._compute_yih()
+        mhk = self._compute_mhk()
         nch = self.cov_nch_items
 
         for i in range(self.num_items):
@@ -343,12 +343,11 @@ class esbm(Baseline):
                                          is_user_mode=False, 
                                          degree_corrected=False, 
                                          degree_param=1, 
-                                         degree_cluster_minus=[1], 
+                                         degree_cluster_minus=np.array([1]), 
                                          degree_node=1, 
                                          device=self.device)
             
             # contribution of covs
-            log_probs_cov = 0
             if nch is not None:
                 log_probs_cov = compute_log_probs_cov(probs=probs, 
                                                       idx=i, 
@@ -358,11 +357,12 @@ class esbm(Baseline):
                                                       nh=frequencies_items_minus, 
                                                       alpha_c=self.alpha_c, 
                                                       alpha_0=self.alpha_0)
+                log_probs = log_probs + log_probs_cov
 
             # sum and use exp trick for stability               
-            probs = np.log(probs+self.epsilon)+log_probs+log_probs_cov
+            probs = np.log(probs+self.epsilon)+log_probs
             probs = np.exp(probs-max(probs))
-            probs /= probs.sum()
+            probs = probs/probs.sum()
 
             # choose cluster assignment
             assignment = np.random.choice(len(probs), p=probs)
@@ -433,7 +433,7 @@ class esbm(Baseline):
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         
-        mhk = self.compute_mhk(self.user_clustering, self.item_clustering)
+        mhk = self._compute_mhk(self.user_clustering, self.item_clustering)
         outer_prod = np.outer(self.frequencies_users, self.frequencies_items)
         theta = (self.prior_a + mhk) / (self.prior_b + outer_prod)
 

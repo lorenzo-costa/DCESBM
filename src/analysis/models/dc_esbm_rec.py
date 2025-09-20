@@ -37,7 +37,7 @@ class dcesbm(Baseline):
         prior type. Possible choices are DP (dirichlet process), PY (pitman-yor process), 
         GN (gnedin process), DM (dirichlet-multinomial model)
     scheme_param : float
-        additional parameter for cluster prior, by default None
+        additional parameter for cluster prior, by default 1
     sigma : float
         sigma parameter for Gibbs-type prior, by default None
     gamma : float
@@ -95,9 +95,9 @@ class dcesbm(Baseline):
                  prior_a=1, 
                  prior_b=1, 
                  scheme_type = None, 
-                 scheme_param = None, 
-                 sigma = None, 
-                 gamma=None,
+                 scheme_param = 1, 
+                 sigma = 0.1, 
+                 gamma=0.5,
                  bar_h_users=None, 
                  bar_h_items=None, 
                  degree_param_users=1, 
@@ -122,25 +122,25 @@ class dcesbm(Baseline):
         self.degree_users = self.Y.sum(axis=1)
         self.degree_items = self.Y.sum(axis=0)
         
-        self.degree_cluster_users = self.compute_degree(clustering=self.user_clustering, 
+        self.degree_clusters_users = self._compute_degree(clustering=self.user_clustering, 
                                                         degrees=self.degree_users, 
                                                         n_clusters=self.num_clusters_users)
         
-        self.degree_cluster_items = self.compute_degree(clustering=self.item_clustering, 
+        self.degree_clusters_items = self._compute_degree(clustering=self.item_clustering, 
                                                         degrees=self.degree_items, 
                                                         n_clusters=self.num_clusters_items)
     
-    ########
     # function to compute cluster degree
-    def compute_degree(self, clustering, degrees, n_clusters):
+    def _compute_degree(self, clustering, degrees, n_clusters):
         degree = np.zeros(n_clusters)
         for i in range(len(clustering)):
             degree[clustering[i]] += degrees[i]
         return degree
     
-    ############
     # modified version of generate data to take degree correction into account
     def generate_data(self):
+        """Generates data according to the degree-corrected ESBM model."""
+        
         np.random.seed(self.seed)
         
         phi_u = np.zeros(shape=(self.num_clusters_users, self.num_users))
@@ -167,15 +167,43 @@ class dcesbm(Baseline):
                 eta_i = self.frequencies_items[qi] * self.phi_i[qi, j]
                 Y_params[i, j] = self.theta[zu, qi] * eta_u * eta_i
 
+        # reset seed for consistency with other models 
+        # (i.e same draw of Y for same params)
+        np.random.seed(self.seed)
         Y = np.random.poisson(Y_params)
         self.Y = Y.copy()
         return
+    
+    def compute_log_likelihood(self):
+        """Computes the log-likelihood of the model.
+
+        Returns
+        -------
+        float
+            Log-likelihood value
+        """
+        ll = compute_log_likelihood(
+            nh=self.frequencies_users, 
+            nk=self.frequencies_items,
+            a=self.prior_a, 
+            b=self.prior_b, 
+            eps=self.epsilon,
+            mhk=self._compute_mhk(),
+            user_clustering=self.user_clustering, 
+            item_clustering=self.item_clustering,
+            dg_u=self.degree_users, 
+            dg_i=self.degree_items, 
+            dg_cl_i=self.degree_clusters_items, 
+            dg_cl_u=self.degree_clusters_users, 
+            degree_corrected=True)
+        
+        return ll
         
     def gibbs_step(self):
         frequencies_users = self.frequencies_users
         frequencies_items = self.frequencies_items      
-        degree_cluster_users = self.degree_cluster_users 
-        degree_cluster_items = self.degree_cluster_items 
+        degree_clusters_users = self.degree_clusters_users 
+        degree_clusters_items = self.degree_clusters_items 
         degree_param_users = self.degree_param_users
         degree_param_items = self.degree_param_items
         
@@ -183,8 +211,8 @@ class dcesbm(Baseline):
         # step for users
         #################################################
 
-        mhk = self.compute_mhk()
-        yuk = self.compute_yuk()
+        mhk = self._compute_mhk()
+        yuk = self._compute_yuk()
 
         H = self.num_clusters_users
         V = self.num_users
@@ -197,7 +225,7 @@ class dcesbm(Baseline):
                 print('H ', H)
                 print('frequencies', frequencies_users)
                 print('nch', nch)
-                print('cluster degree', degree_cluster_users)
+                print('cluster degree', degree_clusters_users)
             
             cluster_user = self.user_clustering[u]
             frequencies_users_minus = frequencies_users.copy()
@@ -215,7 +243,8 @@ class dcesbm(Baseline):
             # if the current cluster becomes empty, remove that row
             if frequencies_users_minus[cluster_user] == 0:
                 mhk_minus = np.vstack([mhk[:cluster_user], mhk[cluster_user+1:]])
-                frequencies_users_minus = np.concatenate([frequencies_users_minus[:cluster_user], frequencies_users_minus[cluster_user+1:]])
+                frequencies_users_minus = np.concatenate([frequencies_users_minus[:cluster_user], 
+                                                          frequencies_users_minus[cluster_user+1:]])
                 H -= 1
                 if nch is not None:
                     for cov in range(len(nch)):
@@ -226,14 +255,20 @@ class dcesbm(Baseline):
             
             degree_cluster_user_minus = mhk_minus.sum(axis = 1)
             
-            probs = sampling_scheme(V, H, frequencies=frequencies_users_minus, bar_h=self.bar_h_users, scheme_type=self.scheme_type, 
-                                    scheme_param=self.scheme_param, sigma=self.sigma, gamma=self.gamma)
+            probs = sampling_scheme(V=V, 
+                                    H=H, 
+                                    frequencies=frequencies_users_minus, 
+                                    bar_h=self.bar_h_users, 
+                                    scheme_type=self.scheme_type, 
+                                    scheme_param=self.scheme_param, 
+                                    sigma=self.sigma, 
+                                    gamma=self.gamma)
 
             log_probs = compute_log_prob(probs, 
-                                         mhk_minus = mhk_minus, 
+                                         mhk_minus=mhk_minus, 
                                          frequencies_primary_minus=frequencies_users_minus, 
                                          frequencies_secondary=frequencies_items, 
-                                         y_values = np.ascontiguousarray(yuk[u]), 
+                                         y_values=np.ascontiguousarray(yuk[u]), 
                                          max_clusters=H, 
                                          epsilon=self.epsilon, 
                                          a=self.prior_a, 
@@ -245,7 +280,6 @@ class dcesbm(Baseline):
                                          degree_param=degree_param_users,
                                          is_user_mode=True) 
             
-            log_probs_cov = 0
             if nch is not None:
                 log_probs_cov = compute_log_probs_cov(probs, 
                                                       idx=u, 
@@ -255,10 +289,12 @@ class dcesbm(Baseline):
                                                       nh=frequencies_users_minus, 
                                                       alpha_c=self.alpha_c, 
                                                       alpha_0=self.alpha_0)
-
-            probs = np.log(probs+self.epsilon)+log_probs + log_probs_cov
+                log_probs = log_probs + log_probs_cov
+                
+            # go back to prob space
+            probs = np.log(probs+self.epsilon)+log_probs
             probs = np.exp(probs-max(probs))
-            probs /= probs.sum()
+            probs = probs/probs.sum()
             
             # choose cluster assignment
             assignment = np.random.choice(len(probs), p=probs)
@@ -313,9 +349,9 @@ class dcesbm(Baseline):
                             nch_minus[cov][c, assignment] += 1
                         nch = nch_minus
                 frequencies_users = frequencies_users_minus
-                degree_cluster_users = mhk.sum(axis=1)
+                degree_clusters_users = mhk.sum(axis=1)
         
-        self.degree_cluster_users = degree_cluster_users
+        self.degree_clusters_users = degree_clusters_users
         self.cov_nch_users = nch
         self.num_clusters_users = H
         self.frequencies_users = frequencies_users
@@ -326,8 +362,8 @@ class dcesbm(Baseline):
         K = self.num_clusters_items
         V = self.num_items
 
-        yih = self.compute_yih()
-        mhk = self.compute_mhk()
+        yih = self._compute_yih()
+        mhk = self._compute_mhk()
 
         nch = self.cov_nch_items
 
@@ -336,7 +372,7 @@ class dcesbm(Baseline):
                 print('\n', self.item_clustering, i)
                 print('frequencies', frequencies_items)
                 print('K ', K)
-                print('degree cluster', degree_cluster_items)
+                print('degree cluster', degree_clusters_items)
             
             cluster_item = self.item_clustering[i]
             frequencies_items_minus = frequencies_items.copy()
@@ -364,22 +400,45 @@ class dcesbm(Baseline):
             
             degree_cluster_item_minus = mhk_minus.sum(axis=0)
 
-            probs = sampling_scheme(V, K, frequencies=frequencies_items_minus, bar_h=self.bar_h_items, scheme_type=self.scheme_type, scheme_param=self.scheme_param, sigma=self.sigma, gamma=self.gamma)
+            probs = sampling_scheme(V=V, 
+                                    H=K, 
+                                    frequencies=frequencies_items_minus, 
+                                    bar_h=self.bar_h_items, 
+                                    scheme_type=self.scheme_type,
+                                    scheme_param=self.scheme_param,
+                                    sigma=self.sigma,
+                                    gamma=self.gamma)
 
-            log_probs = compute_log_prob(probs=probs, mhk_minus=mhk_minus, frequencies_primary_minus=frequencies_items_minus, 
-                                     frequencies_secondary = frequencies_users, y_values=np.ascontiguousarray(yih[i]), max_clusters=K,
-                                     epsilon=self.epsilon, a = self.prior_a, b=self.prior_b,  device=self.device, degree_corrected=True,
-                                     degree_cluster_minus=degree_cluster_item_minus, degree_node=self.degree_items[i],
-                                     degree_param=degree_param_items, is_user_mode=False)
+            log_probs = compute_log_prob(probs=probs, 
+                                         mhk_minus=mhk_minus, 
+                                         frequencies_primary_minus=frequencies_items_minus, 
+                                         frequencies_secondary=frequencies_users, 
+                                         y_values=np.ascontiguousarray(yih[i]), 
+                                         max_clusters=K,
+                                         epsilon=self.epsilon, 
+                                         a=self.prior_a, 
+                                         b=self.prior_b, 
+                                         device=self.device, 
+                                         degree_corrected=True,
+                                         degree_cluster_minus=degree_cluster_item_minus, 
+                                         degree_node=self.degree_items[i],
+                                         degree_param=degree_param_items, 
+                                         is_user_mode=False)
             
-            log_probs_cov = 0
             if nch is not None:
-                log_probs_cov = compute_log_probs_cov(probs, idx=i, cov_types=self.cov_types_items, cov_nch = nch_minus, cov_values = self.cov_values_items, 
-                                                nh=frequencies_items_minus, alpha_c = self.alpha_c, alpha_0 = self.alpha_0)
+                log_probs_cov = compute_log_probs_cov(probs, 
+                                                      idx=i, 
+                                                      cov_types=self.cov_types_items, 
+                                                      cov_nch=nch_minus, 
+                                                      cov_values=self.cov_values_items, 
+                                                      nh=frequencies_items_minus, 
+                                                      alpha_c=self.alpha_c, 
+                                                      alpha_0=self.alpha_0)
+                log_probs = log_probs + log_probs_cov
                                 
-            probs = np.log(probs+self.epsilon)+log_probs+log_probs_cov
+            probs = np.log(probs+self.epsilon)+log_probs
             probs = np.exp(probs-max(probs))
-            probs /= probs.sum()
+            probs = probs/probs.sum()
 
             # choose cluster assignment
             assignment = np.random.choice(len(probs), p=probs)
@@ -431,9 +490,9 @@ class dcesbm(Baseline):
                         nch = nch_minus
                         
                 frequencies_items = frequencies_items_minus
-                degree_cluster_items = mhk.sum(axis=0)
+                degree_clusters_items = mhk.sum(axis=0)
         
-        self.degree_cluster_items = degree_cluster_items
+        self.degree_clusters_items = degree_clusters_items
         self.cov_nch_items = nch
         self.num_clusters_items = K
         self.frequencies_items = frequencies_items
@@ -445,21 +504,7 @@ class dcesbm(Baseline):
         self.n_iters = n_iters
         assert len(self.user_clustering)==len(self.degree_users)
         
-        ll = compute_log_likelihood(nh = self.frequencies_users, 
-                                    nk = self.frequencies_items, 
-                                    a = self.prior_a, 
-                                    b = self.prior_b, 
-                                    eps = self.epsilon, 
-                                    mhk=self.compute_mhk(), 
-                                    user_clustering=self.user_clustering, 
-                                    item_clustering=self.item_clustering,
-                                    degree_param_users=self.degree_param_users,
-                                    degree_param_items=self.degree_param_items,
-                                    dg_u=self.degree_users, 
-                                    dg_i=self.degree_items, 
-                                    dg_cl_i=self.degree_cluster_items, 
-                                    dg_cl_u=self.degree_cluster_users, 
-                                    degree_corrected=degree_corrected)
+        ll = self.compute_log_likelihood()
         
         print('starting log likelihood', ll)
         
@@ -483,21 +528,7 @@ class dcesbm(Baseline):
         for it in range(n_iters):
             
             self.gibbs_step()
-            ll = compute_log_likelihood(nh = self.frequencies_users, 
-                                        nk = self.frequencies_items,
-                                        a = self.prior_a, 
-                                        b = self.prior_b, 
-                                        eps = self.epsilon,
-                                        mhk = self.compute_mhk(),
-                                        user_clustering=self.user_clustering, 
-                                        item_clustering=self.item_clustering,
-                                        degree_param_users=self.degree_param_users,
-                                        degree_param_items=self.degree_param_items,
-                                        dg_u=self.degree_users, 
-                                        dg_i=self.degree_items, 
-                                        dg_cl_i=self.degree_cluster_items, 
-                                        dg_cl_u=self.degree_cluster_users, 
-                                        degree_corrected=degree_corrected)
+            ll = self.compute_log_likelihood()
             
             llks[it+1] += ll
             user_cluster_list[it+1] += self.user_clustering

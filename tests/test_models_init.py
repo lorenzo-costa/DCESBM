@@ -503,3 +503,14 @@ class TestInitMethod:
             'gamma': 1e-10
         })
         obj = Baseline(**params)  # Should not raise
+        
+    # invalid scheme_type
+    def test_invalid_scheme_type(self):
+        """Test invalid scheme_type"""
+        params = self.valid_params.copy()
+        params.update({
+            'scheme_type': 'INVALID',
+            'scheme_param': 1.0
+        })
+        with pytest.raises(Exception, match='scheme type must be one of DP, PY, GN, DM'):
+            Baseline(**params)
