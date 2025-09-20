@@ -183,6 +183,11 @@ class Baseline:
                 raise Exception('item clustering length does not match number of items')
             if min(item_clustering) < 0:
                 raise Exception('item clustering must be non-negative integers')
+        
+        if not isinstance(cov_users, (type(None), list)):
+            raise Exception('covariates for users must be provided as a list of tuples')
+        if not isinstance(cov_items, (type(None), list)):
+            raise Exception('covariates for items must be provided as a list of tuples')
 
         self.seed = seed
         self.num_items = num_items
@@ -593,13 +598,14 @@ class Baseline:
             cov_values.append(cov[1])  
 
         if isinstance(self.alpha_c, (int, float)):
-            self.alpha_c = []
+            temp = []
             for i in range(len(cov_names)):
                 unique_cov_values = len(np.unique(cov_values[i]))
-                self.alpha_c.extend([self.alpha_c for _ in range(unique_cov_values)])
-            self.alpha_c = np.array(self.alpha_c)
+                temp.extend([self.alpha_c for _ in range(unique_cov_values)])
+                
+            self.alpha_c = np.array(temp)
             self.alpha_0 = np.sum(self.alpha_c)
-
+            
         return cov_names, cov_types, cov_values
      
     def _compute_nch(self, cov_values, clustering, n_clusters):
