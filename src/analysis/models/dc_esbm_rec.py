@@ -1,7 +1,5 @@
 import numpy as np
 import time
-import sys
-from pathlib import Path
 
 from models.baseline import Baseline
 from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
@@ -281,7 +279,6 @@ class dcesbm(Baseline):
                                          is_user_mode=True) 
             
             if nch is not None:
-                print('using covariates')
                 log_probs_cov = compute_log_probs_cov(probs, 
                                                       idx=u, 
                                                       cov_types=self.cov_types_users, 

@@ -4,7 +4,6 @@
 import gzip
 import json
 from collections import Counter
-from tabnanny import verbose
 
 def load_data(file_name, start, end):
     """Loads a gzip file as JSON object.

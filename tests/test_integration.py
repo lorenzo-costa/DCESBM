@@ -1,4 +1,3 @@
-from matplotlib.pylab import seed
 import pytest
 import sys
 from pathlib import Path

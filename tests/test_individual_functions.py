@@ -31,7 +31,6 @@ class TestIndividualFunctions:
         self.valid_params = {
             'num_items': 10,
             'num_users': 10,
-            #'Y': Y,
             'prior_a': 1,
             'prior_b': 1,
             'epsilon': 1e-6,
@@ -41,6 +40,11 @@ class TestIndividualFunctions:
             'device': 'cpu'
         }
         
+        self.cov_users = [('cov1_cat', np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])),
+                          ('cov2_cat', np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))]
+        self.cov_items = [('cov1_cat', np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])),
+                          ('cov2_cat', np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))]
+
     # gibbs step and train tests
     @pytest.mark.parametrize("model, scheme_type",[
         (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
@@ -59,6 +63,33 @@ class TestIndividualFunctions:
     def test_gibbs_train(self, model, scheme_type):
         """test gibbs_train runs without error"""
         model = model(scheme_type=scheme_type, **self.valid_params)
+        model.gibbs_train(100)
+        assert True
+    
+    # gibbs with covariates and train tests
+    @pytest.mark.parametrize("model, scheme_type",[
+        (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
+        (esbm, 'DP'), (esbm, 'PY'), (esbm, 'GN'),
+        (dcesbm, 'DP'), (dcesbm, 'PY'), (dcesbm, 'GN')])
+    def test_gibbs_step_cov(self, model, scheme_type):
+        """test gibbs_step runs without error"""
+        model = model(scheme_type=scheme_type, 
+                      cov_users=self.cov_users, 
+                      cov_items=self.cov_items,
+                      **self.valid_params)
+        model.gibbs_step()
+        assert True
+    
+    @pytest.mark.parametrize("model, scheme_type",[
+        (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
+        (esbm, 'DP'), (esbm, 'PY'), (esbm, 'GN'),
+        (dcesbm, 'DP'), (dcesbm, 'PY'), (dcesbm, 'GN')])
+    def test_gibbs_train_cov(self, model, scheme_type):
+        """test gibbs_train runs without error"""
+        model = model(scheme_type=scheme_type, 
+                      cov_users=self.cov_users, 
+                      cov_items=self.cov_items,
+                      **self.valid_params)
         model.gibbs_train(100)
         assert True
         

@@ -1,11 +1,20 @@
 
-__pycache__/
 
+__pycache__/
+.pytest_cache/
+.vscode/
+.coverage
+
+questions.txt
+
+# file to track which packages the project depends on
+package_import.py
+
+# do not track changes to data
 data/processed/dataset_clean.csv
 data/raw/goodreads_interactions_dedup.json.gz
-.vscode/
-questions.txt
-package_import.py
+
+
 # do not track changes in intermediate files
 .DS_Store
 *.mat

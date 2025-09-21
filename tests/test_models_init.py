@@ -1,7 +1,7 @@
 import pytest
 import sys
-from pathlib import Path
 
+from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.analysis.models.baseline import Baseline
@@ -155,8 +155,6 @@ class TestInitMethod:
             'bar_h_items': 20,
             'sigma': -0.5
         })
-        num_users = params['num_users']
-        bar_h_users = params['bar_h_users']
         with pytest.raises(ValueError):
             Baseline(**params)
     

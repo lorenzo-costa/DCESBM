@@ -1,3 +1,4 @@
+# bunch of tests to make sure sampling scheme returns expected results
 import sys
 from pathlib import Path
 
@@ -12,28 +13,23 @@ class TestSamplingScheme:
     # base set
     params_dm = {
         'V': 10, 'H': 2, 'bar_h': 10, 'scheme_type': 'DM',
-        'scheme_param': 4, 'sigma': -1, 'gamma': 1
-    }
+        'scheme_param': 4, 'sigma': -1, 'gamma': 1}
 
     params_dp = {
         'V': 10, 'H': 2, 'bar_h': 10, 'scheme_type': 'DP',
-        'scheme_param': 1, 'sigma': 0, 'gamma': 1
-    }
+        'scheme_param': 1, 'sigma': 0, 'gamma': 1}
     
     params_py = {
         'V': 10, 'H': 2, 'bar_h': 10, 'scheme_type': 'PY',
-        'scheme_param': 1, 'sigma': 0.5, 'gamma': 1
-    }
+        'scheme_param': 1, 'sigma': 0.5, 'gamma': 1}
     
     params_gn = {
         'V': 10, 'H': 2, 'bar_h': 10, 'scheme_type': 'GN',
-        'scheme_param': 0.5, 'sigma': -1, 'gamma': 0.5
-    }
+        'scheme_param': 0.5, 'sigma': -1, 'gamma': 0.5}
     
     eps = 1e-6
 
-
-    # dm should not make new clusters
+    # saturated multinomial should not make new clusters
     @pytest.mark.parametrize(
         "V, frequencies, H",
         [
@@ -100,9 +96,9 @@ class TestSamplingScheme:
 
         out = sampling_scheme(**params_updated)
         expected = np.append(frequencies, params_updated['scheme_param'])
+        
         assert np.all(out == expected)
         assert (sum(out/sum(out)) - 1) < self.eps
-
 
     # test py behaviour
     @pytest.mark.parametrize(
@@ -154,7 +150,6 @@ class TestSamplingScheme:
         )
         assert np.all(out == expected)
         assert (sum(out/sum(out))-1) < self.eps
-    
     
     # test py with sigma=0 is equivalent to dp
     @pytest.mark.parametrize(

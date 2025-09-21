@@ -1,6 +1,11 @@
 ################################################
 # auxialiaries for plotting
 
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib.patches import Rectangle
+
 # function to plot the heatmap representation
 def plot_heatmap(model, 
                  user_covariates=None, 
@@ -9,11 +14,6 @@ def plot_heatmap(model,
                  size=(12,10), 
                  capped=None,
                  save_path=None):
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    from matplotlib.patches import Rectangle
     
     if user_covariates is not None:
         user_covariates = user_covariates.copy()
