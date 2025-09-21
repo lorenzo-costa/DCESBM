@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from utilities.plotting_functions import plot_heatmap
-from models.esbm_rec import esbm
-from models.dc_esbm_rec import dcesbm
+from models.esbm_rec import Esbm
+from models.dc_esbm_rec import Dcesbm
 from utilities.valid_functs import multiple_runs
 import yaml
 
@@ -13,8 +13,8 @@ with open("src/analysis/config_sim.yaml", "r") as f:
 
 n_users = config["general_params"]["num_users"]
 n_items = config["general_params"]["num_items"]
-num_clusters_users = config["general_params"]["bar_h_users"]
-num_clusters_items = config["general_params"]["bar_h_items"]
+# num_clusters_users = config["general_params"]["bar_h_users"]
+# num_clusters_items = config["general_params"]["bar_h_items"]
 n_iters = config["run_settings"]["num_iters"]
 burn_in = config["run_settings"]["burn_in"]
 thinning = config["run_settings"]["thinning"]
@@ -34,8 +34,8 @@ params_init = config["params_init"]
 cov_places_users = [3,4,5]
 cov_places_items = [3,4,5]
 
-model_list = [dcesbm, dcesbm, dcesbm, dcesbm, dcesbm, dcesbm, 
-              esbm, esbm, esbm, esbm, esbm, esbm]
+model_list = [Dcesbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm, 
+              Esbm, Esbm, Esbm, Esbm, Esbm, Esbm]
 params_list = [params_dp, params_py, params_gn, 
                params_dp_cov, params_py_cov, params_gn_cov,
                params_dp, params_py, params_gn, 
@@ -47,12 +47,10 @@ model_names = ['dc_DP', 'dc_PY', 'dc_GN',
                'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
 
 # run simulations 
-out = multiple_runs(true_mod=dcesbm, 
+out = multiple_runs(true_mod=Dcesbm, 
                     params_init=params_init, 
                     num_users=n_users, 
-                    num_items=n_items, 
-                    num_clusters_users=num_clusters_users, 
-                    num_clusters_items=num_clusters_items, 
+                    num_items=n_items,  
                     n_runs=n_runs, 
                     n_iters=n_iters,
                     params_list=params_list, 

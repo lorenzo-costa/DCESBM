@@ -199,9 +199,7 @@ def generate_val_set(y,
 
 def multiple_runs(true_mod,
                   num_users, 
-                  num_items, 
-                  num_clusters_users, 
-                  num_clusters_items, 
+                  num_items,
                   n_runs, 
                   n_iters, 
                   params_list, 
@@ -301,30 +299,29 @@ def multiple_runs(true_mod,
     vi_users_list = []
     vi_items_list = []
     
+    if params_init is None:
+        params_init = {}
+        params_init['user_clustering'] = 'random'
+        params_init['item_clustering'] = 'random'
+        params_init['cov_users'] = None
+        params_init['cov_items'] = None
+    
     for r in range(n_runs):
         np.random.seed(seed+r)
-        
-        if params_init is None:
-            params_init = {}
-            params_init['user_clustering'] = 'random'
-            params_init['item_clustering'] = 'random'
-            params_init['cov_users'] = None
-            params_init['cov_items'] = None
 
         true_model = true_mod(**params_init)
         Y_train, Y_val = generate_val_set(true_model.Y, size=0.1, seed=42, only_observed=False)
         true_users = true_model.user_clustering.copy()
         true_items = true_model.item_clustering.copy()
-        
     
-        # generate binary covariate following clustering + flip 10% of values
+        # generate binary covariate following clustering + flip 5% of values
         temp = np.array([True if true_users[i]%2==0 else False for i in range(num_users)])
-        idxs = np.random.choice(num_users, size=int(0.1*num_users), replace=False)
+        idxs = np.random.choice(num_users, size=int(0.05*num_users), replace=False)
         temp[idxs] = ~temp[idxs]
         cov_users = [('cov1_cat', temp.astype(int).copy())]
         
         temp = np.array([True if true_items[i]%2==0 else False for i in range(num_items)])
-        idxs = np.random.choice(num_items, size=int(0.1*num_items), replace=False)
+        idxs = np.random.choice(num_items, size=int(0.05*num_items), replace=False)
         temp[idxs] = ~temp[idxs]
         cov_items = [('cov1_cat', temp.astype(int).copy())]
                 

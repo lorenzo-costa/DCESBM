@@ -6,8 +6,8 @@ import numpy as np
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.analysis.models.baseline import Baseline
-from src.analysis.models.esbm_rec import esbm
-from src.analysis.models.dc_esbm_rec import dcesbm
+from src.analysis.models.esbm_rec import Esbm
+from src.analysis.models.dc_esbm_rec import Dcesbm
 from src.analysis.utilities.numba_functions import compute_log_likelihood
 
 
@@ -48,8 +48,8 @@ class TestIndividualFunctions:
     # gibbs step and train tests
     @pytest.mark.parametrize("model, scheme_type",[
         (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
-        (esbm, 'DP'), (esbm, 'PY'), (esbm, 'GN'),
-        (dcesbm, 'DP'), (dcesbm, 'PY'), (dcesbm, 'GN')])
+        (Esbm, 'DP'), (Esbm, 'PY'), (Esbm, 'GN'),
+        (Dcesbm, 'DP'), (Dcesbm, 'PY'), (Dcesbm, 'GN')])
     def test_gibbs_step(self, model, scheme_type):
         """test gibbs_step runs without error"""
         model = model(scheme_type=scheme_type, **self.valid_params)
@@ -58,8 +58,8 @@ class TestIndividualFunctions:
     
     @pytest.mark.parametrize("model, scheme_type",[
         (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
-        (esbm, 'DP'), (esbm, 'PY'), (esbm, 'GN'),
-        (dcesbm, 'DP'), (dcesbm, 'PY'), (dcesbm, 'GN')])
+        (Esbm, 'DP'), (Esbm, 'PY'), (Esbm, 'GN'),
+        (Dcesbm, 'DP'), (Dcesbm, 'PY'), (Dcesbm, 'GN')])
     def test_gibbs_train(self, model, scheme_type):
         """test gibbs_train runs without error"""
         model = model(scheme_type=scheme_type, **self.valid_params)
@@ -69,8 +69,8 @@ class TestIndividualFunctions:
     # gibbs with covariates and train tests
     @pytest.mark.parametrize("model, scheme_type",[
         (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
-        (esbm, 'DP'), (esbm, 'PY'), (esbm, 'GN'),
-        (dcesbm, 'DP'), (dcesbm, 'PY'), (dcesbm, 'GN')])
+        (Esbm, 'DP'), (Esbm, 'PY'), (Esbm, 'GN'),
+        (Dcesbm, 'DP'), (Dcesbm, 'PY'), (Dcesbm, 'GN')])
     def test_gibbs_step_cov(self, model, scheme_type):
         """test gibbs_step runs without error"""
         model = model(scheme_type=scheme_type, 
@@ -82,8 +82,8 @@ class TestIndividualFunctions:
     
     @pytest.mark.parametrize("model, scheme_type",[
         (Baseline, 'DP'), (Baseline, 'PY'), (Baseline, 'GN'),
-        (esbm, 'DP'), (esbm, 'PY'), (esbm, 'GN'),
-        (dcesbm, 'DP'), (dcesbm, 'PY'), (dcesbm, 'GN')])
+        (Esbm, 'DP'), (Esbm, 'PY'), (Esbm, 'GN'),
+        (Dcesbm, 'DP'), (Dcesbm, 'PY'), (Dcesbm, 'GN')])
     def test_gibbs_train_cov(self, model, scheme_type):
         """test gibbs_train runs without error"""
         model = model(scheme_type=scheme_type, 
@@ -95,7 +95,7 @@ class TestIndividualFunctions:
         
     # log likelihood tests
     @pytest.mark.parametrize(("model, degree_corrected, scheme_type"),
-                             [(Baseline, False, 'DP'), (esbm, False, 'DP'), (dcesbm, True, 'DP')])
+                             [(Baseline, False, 'DP'), (Esbm, False, 'DP'), (Dcesbm, True, 'DP')])
     def test_compute_log_likelihood(self, model, degree_corrected, scheme_type):
         """tests that self.compute_log_likelihood() returns the same value as compute_log_likelihood()"""
         mm = model(scheme_type=scheme_type, **self.valid_params)
@@ -144,8 +144,8 @@ class TestIndividualFunctions:
         params_dc = self.valid_params.copy()
         params_dc['degree_param_users'] = 1e15
         params_dc['degree_param_items'] = 1e15
-        mm_dc = dcesbm(scheme_type=scheme_type, **params_dc)
-        mm = esbm(scheme_type=scheme_type, **self.valid_params)
+        mm_dc = Dcesbm(scheme_type=scheme_type, **params_dc)
+        mm = Esbm(scheme_type=scheme_type, **self.valid_params)
 
         llk_dc = mm_dc.compute_log_likelihood()
         llk = mm.compute_log_likelihood()

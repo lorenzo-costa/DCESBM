@@ -5,7 +5,7 @@ from models.baseline import Baseline
 from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov, compute_log_likelihood
 
 
-class dcesbm(Baseline):
+class Dcesbm(Baseline):
     """Degree-Corrected Exteneded Stochastic Block Model
     
     Degree corrected version of the bipartite Extended Stochastic Block Model (ESBM) 

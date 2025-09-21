@@ -7,8 +7,8 @@ import warnings
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.analysis.models.baseline import Baseline
-from src.analysis.models.esbm_rec import esbm
-from src.analysis.models.dc_esbm_rec import dcesbm
+from src.analysis.models.esbm_rec import Esbm
+from src.analysis.models.dc_esbm_rec import Dcesbm
 from src.analysis.utilities.valid_functs import * 
 
 
@@ -76,8 +76,8 @@ class TestIntegration:
     @pytest.mark.parametrize("scheme_type", ['DP', 'PY', 'GN'])
     def test_equality_of_llk_init(self, scheme_type):
         modelbaseline = Baseline(scheme_type=scheme_type, **self.valid_params)
-        modelesbm = esbm(scheme_type=scheme_type, **self.valid_params)
-        modeldcesbm = dcesbm(scheme_type=scheme_type, **self.valid_params)
+        modelesbm = Esbm(scheme_type=scheme_type, **self.valid_params)
+        modeldcesbm = Dcesbm(scheme_type=scheme_type, **self.valid_params)
 
         baseline_llk = modelbaseline.compute_log_likelihood()
         esbm_llk = modelesbm.compute_log_likelihood()
@@ -89,8 +89,8 @@ class TestIntegration:
     @pytest.mark.parametrize("scheme_type", ['DP', 'PY', 'GN'])
     def test_better_than_baseline(self, scheme_type):
         modelbaseline = Baseline(scheme_type=scheme_type, **self.valid_params)
-        modelesbm = esbm(scheme_type=scheme_type, **self.valid_params)
-        modeldcesbm = dcesbm(scheme_type=scheme_type, **self.valid_params)
+        modelesbm = Esbm(scheme_type=scheme_type, **self.valid_params)
+        modeldcesbm = Dcesbm(scheme_type=scheme_type, **self.valid_params)
 
         outbaseline = modelbaseline.gibbs_train(100)
         outesbm = modelesbm.gibbs_train(100)
@@ -105,9 +105,9 @@ class TestIntegration:
     @pytest.mark.parametrize("true_model", ['dcesbm', 'esbm'])
     def test_multiple_runs_nocov(self, true_model):
         if true_model == 'dcesbm':
-            true_mod = dcesbm
+            true_mod = Dcesbm
         else:
-            true_mod = esbm
+            true_mod = Esbm
         
         params_dp = {'scheme_type': 'DP', 'degree_param_users': 5, 'degree_param_items': 5,}
         params_py = {'scheme_type': 'PY', 'degree_param_users': 5, 'degree_param_items': 5,}
@@ -116,7 +116,7 @@ class TestIntegration:
         params_list = [params_dp, params_py, params_gn, 
                        params_dp, params_py, params_gn]
 
-        model_list = [dcesbm, dcesbm, dcesbm, esbm, esbm, esbm]
+        model_list = [Dcesbm, Dcesbm, Dcesbm, Esbm, Esbm, Esbm]
 
         model_names = ['dcesbm_dp', 'dcesbm_py', 'dcesbm_gn', 'esbm_dp', 'esbm_py', 'esbm_gn']
 
@@ -206,10 +206,10 @@ class TestIntegration:
     @pytest.mark.parametrize("true_model", ['dcesbm', 'esbm'])
     def test_multiple_runs_cov(self, true_model):
         if true_model == 'dcesbm':
-            true_mod = dcesbm
+            true_mod = Dcesbm
         else:
-            true_mod = esbm
-        
+            true_mod = Esbm
+
         params_dp = {'scheme_type': 'DP', 'degree_param_users': 5, 'degree_param_items': 5,}
         params_py = {'scheme_type': 'PY', 'degree_param_users': 5, 'degree_param_items': 5,}
         params_gn = {'scheme_type': 'GN', 'degree_param_users': 5, 'degree_param_items': 5,}
@@ -217,7 +217,7 @@ class TestIntegration:
         params_list = [params_dp, params_py, params_gn, 
                        params_dp, params_py, params_gn]
 
-        model_list = [dcesbm, dcesbm, dcesbm, esbm, esbm, esbm]
+        model_list = [Dcesbm, Dcesbm, Dcesbm, Esbm, Esbm, Esbm]
 
         model_names = ['dcesbm_dp', 'dcesbm_py', 'dcesbm_gn', 'esbm_dp', 'esbm_py', 'esbm_gn']
         

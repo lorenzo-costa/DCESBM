@@ -16,6 +16,8 @@ params_init:
   <<: *general_params
   user_clustering: random
   item_clustering: random
+  bar_h_users: 4
+  bar_h_items: 4
   degree_param_users: 10
   degree_param_items: 10
   prior_a: 1

@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from models.esbm_rec import esbm
-from models.dc_esbm_rec import dcesbm
+from models.esbm_rec import Esbm
+from models.dc_esbm_rec import Dcesbm
 from utilities.valid_functs import validate_models, generate_val_set
 import seaborn as sns
 import yaml
@@ -69,7 +69,7 @@ Y_train, y_val = generate_val_set(matrix_small, size=0.2, seed=42, only_observed
 # training
 ##########################
 # define models
-model_list = [esbm, esbm, esbm, esbm, esbm, esbm, dcesbm, dcesbm, dcesbm, dcesbm, dcesbm, dcesbm]
+model_list = [Esbm, Esbm, Esbm, Esbm, Esbm, Esbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm]
 params_list = [params_dp, params_py, params_gn, params_dp_cov, params_py_cov, params_gn_cov, params_dp, params_py, params_gn, params_dp_cov, params_py_cov, params_gn_cov]  
 model_names = ['esbm_DP', 'esbm_PY', 'esbm_GN', 'esbm_DP_COV', 'esbm_PY_COV', 'esbm_GN_COV', 'dcesbm_DP', 'dcesbm_PY', 'dcesbm_GN', 'dcesbm_DP_COV', 'dcesbm_PY_COV', 'dcesbm_GN_COV']
 

@@ -3,7 +3,7 @@ import numpy as np
 from models.baseline import Baseline
 from utilities.numba_functions import sampling_scheme, compute_log_prob, compute_log_probs_cov
 
-class esbm(Baseline):
+class Esbm(Baseline):
     """Bipartite Extended Stochastic Block Model (ESBM) with Poisson likelihood.
 
     Parameters
