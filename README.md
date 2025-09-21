@@ -11,9 +11,8 @@ The project extends this version of SBMs to **weighted, bipartite networks** and
 
 The codebase serves two main purposes:
 1. **Simulation Studies:** Scripts to reproduce the synthetic experiments in the thesis, demonstrating the performance of ESBMs under different network settings.
-2. **Goodreads Book Ratings Analysis:** An empirical study applying ESBM and its degree-corrected variant to a large-scale **Goodreads dataset** of book ratings.
+2. **Analysis of real-world dataset from Goodreads:** An empirical study applying ESBM and its degree-corrected variant to a large-scale **Goodreads dataset** of book ratings.
 
-This repository provides a **reproducible workflow** for both simulation experiments and real-world analysis.
 
 ### Data
 The dataset is not stored in this repository due to its size. However:
@@ -21,7 +20,8 @@ The dataset is not stored in this repository due to its size. However:
 - The raw Goodreads ratings data can be downloaded from [this page](https://cseweb.ucsd.edu/~jmcauley/datasets/goodreads.html) (called 'goodreads_interactions_dedup.json').
 
 ### So... why does this matter? 
-Recommendation algorithms decide what we watch, read, or buy but they are often black boxes. This project aims to develop an interpretable algorithm modeling user-item interactions as networks. Instead of blindly factorizing a ratings matrix, we discover communities of similar users and items, making recommendations easier to interpret and explain. Plus, with degree correction, we don’t get fooled by power-users or ultra-popular items, your “hidden gem” recommendations stay hidden gems.
+Recommendation algorithms decide what we watch, read, or buy but they are often black boxes. The goal of this project is to an interpretable algorithm modeling user-item interactions as networks. Instead of blindly factorizing a ratings matrix, we discover communities of similar users and items, making recommendations easier to interpret and explain. Plus, with degree correction, we can adjust for super popular items or very active users making recommendations more accurate.\\
+It is also worth pointing out that this thesis was motivated by an application to recommender systems but the methods we derive can be applied to any other type of weighted bipartite graph (e.g. flower-pollinators networks or citation networks)
 
 ---
 
@@ -29,11 +29,17 @@ Recommendation algorithms decide what we watch, read, or buy but they are often 
 
 ```text
 ├── data/               # Raw and processed datasets
-├── results/            # Generated figures and tables
-├── src/                # Analysis and pipeline scripts
+├── results/            # Outputs from analysis
+│   ├── figures/        # Plots and visualizations
+│   ├── tables/         # Tabular results
+│   └── text/           # PDF version of thesis
+├── src/                # Source code
 │   ├── analysis/       # Modeling and statistical methods
+│   │   ├── models/     # Model definitions
+│   │   └── utilities/  # Helper functions
 │   └── pipeline/       # Data loading and preprocessing
-└── README.md           # This file
+├── tests/              # Unit and integration tests
+└── README.md           # this file :)
 ```
 ---
 
@@ -46,6 +52,7 @@ git clone https://github.com/lorenzo-costa/DCESBM.git
 cd DCESBM
 pip install -r requirements.txt
 ```
+
 (conda)
 ```bash
 git clone https://github.com/lorenzo-costa/DCESBM.git
