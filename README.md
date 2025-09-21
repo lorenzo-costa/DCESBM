@@ -20,7 +20,8 @@ The dataset is not stored in this repository due to its size. However:
 - The raw Goodreads ratings data can be downloaded from [this page](https://cseweb.ucsd.edu/~jmcauley/datasets/goodreads.html) (called 'goodreads_interactions_dedup.json').
 
 ### So... why does this matter? 
-Recommendation algorithms decide what we watch, read, or buy but they are often black boxes. The goal of this project is to an interpretable algorithm modeling user-item interactions as networks. Instead of blindly factorizing a ratings matrix, we discover communities of similar users and items, making recommendations easier to interpret and explain. Plus, with degree correction, we can adjust for super popular items or very active users making recommendations more accurate.\\
+Recommendation algorithms decide what we watch, read, or buy but they are often black boxes. The goal of this project is to an interpretable algorithm modeling user-item interactions as networks. Instead of blindly factorizing a ratings matrix, we discover communities of similar users and items, making recommendations easier to interpret and explain. Plus, with degree correction, we can adjust for super popular items or very active users making recommendations more accurate.
+
 It is also worth pointing out that this thesis was motivated by an application to recommender systems but the methods we derive can be applied to any other type of weighted bipartite graph (e.g. flower-pollinators networks or citation networks)
 
 ---
