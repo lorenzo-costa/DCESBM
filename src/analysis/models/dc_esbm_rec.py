@@ -639,6 +639,9 @@ class Dcesbm(Baseline):
             
         theta = self.estimated_theta
         out = []
+
+        if not isinstance(users, (list, np.ndarray)):
+            users = [users]
         
         for u in users:
             if ignore_seen is True:
