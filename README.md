@@ -65,6 +65,9 @@ conda activate DCESBM
 ---
 
 ## Usage
+An example of how the model works can be found in the notebook `example.ipynb'.
+
+To run the simulations and data analysis:
 1. Preprocess the data: place Goodreads dataset in data/raw and run
 ```bash
 python src/pipeline/pre_processing_functs.py
@@ -79,11 +82,12 @@ Alternatively you can dowload the data using
 gdown 'https://drive.google.com/uc?id=1AaZomR9mWmkn6FP4KxtM86PdKuQjZ-zl' -O data/processed/dataset_clean.csv
 ```
 
-2. Run simulations
+2. Run simulations. This populates the folder results with figures and tables from simulations
 ```bash
 python src/analysis/simulations.py
 ```
-3. Run data analysis:
+3. Run data analysis. This populates the folder results with figures and tables from 
+analysis of Goodreads dataset
 ```bash
 python src/analysis/book_analysis.py
 ```
