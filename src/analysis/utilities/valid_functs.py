@@ -176,6 +176,26 @@ def generate_val_set(y,
                      size=0.1, 
                      seed=42, 
                      only_observed=True):
+    """Generates validation and training set from a given rating matrix.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        The input rating matrix.
+    size : float, optional
+        The proportion of the dataset to include in the validation set, by default 0.1
+    seed : int, optional
+        The random seed for reproducibility, by default 42
+    only_observed : bool, optional
+        Whether to include only observed ratings in the validation set, by default True
+
+    Returns
+    -------
+    np.ndarray
+        The training set.
+    list[tuple]
+        The validation set as a list of (user, item, rating) tuples.
+    """
     
     np.random.seed(seed)
     n_users, n_items = y.shape

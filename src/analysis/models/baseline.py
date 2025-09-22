@@ -850,8 +850,15 @@ class Baseline:
 
         Returns
         -------
-        dict
-            Dictionary containing the best cluster assignments and their corresponding VI value.
+        tuple (user_cluster_assignments, item_cluster_assignments, vi_value_users, vi_value_items)
+            user_cluster_assignments : np.ndarray
+                Estimated cluster assignments for users
+            item_cluster_assignments : np.ndarray
+                Estimated cluster assignments for items
+            vi_value_users : float
+                Variation of information value for user clustering
+            vi_value_items : float
+                Variation of information value for item clustering
 
         Raises
         ------

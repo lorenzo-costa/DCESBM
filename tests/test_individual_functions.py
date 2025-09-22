@@ -9,24 +9,13 @@ from src.analysis.models.baseline import Baseline
 from src.analysis.models.esbm_rec import Esbm
 from src.analysis.models.dc_esbm_rec import Dcesbm
 from src.analysis.utilities.numba_functions import compute_log_likelihood
+from src.analysis.utilities.valid_functs import generate_val_set
 
 
 class TestIndividualFunctions:
     
     def setup_method(self):
         """Setup common test parameters"""
-        
-        Y = np.array(([
-                [2, 1, 0, 0, 0, 2, 2, 0, 0, 0],
-                [1, 0, 0, 0, 0, 1, 1, 2, 0, 0],
-                [4, 2, 0, 1, 2, 3, 7, 1, 1, 2],
-                [3, 3, 4, 1, 3, 5, 4, 3, 0, 0],
-                [4, 3, 1, 5, 4, 1, 3, 3, 2, 2],
-                [2, 1, 0, 0, 0, 1, 0, 1, 0, 0],
-                [1, 2, 0, 0, 0, 2, 1, 0, 0, 0],
-                [1, 1, 0, 0, 0, 2, 1, 2, 0, 0],
-                [3, 8, 1, 0, 2, 2, 4, 4, 3, 1],
-                [6, 4, 0, 1, 4, 8, 5, 5, 3, 5]]))
         
         self.valid_params = {
             'num_items': 10,
@@ -152,4 +141,31 @@ class TestIndividualFunctions:
         
         assert np.isclose(llk_dc, llk)
     
-    
+    # generate val set test
+    @pytest.mark.parametrize("val_size, only_observed", [
+        (0.1, True), (0.1, False), (0.25, True), (0.25, False), (0.5, True), (0.5, False)
+    ])
+    def test_generate_val_set(self, val_size, only_observed):
+        Y = np.random.choice([0, 1, 2, 3, 4, 5], 
+                             size=(20, 30), 
+                             p=[0.7, 0.06, 0.06, 0.06, 0.06, 0.06])
+        
+        Y_train, Y_val = generate_val_set(Y, 
+                                          size=val_size, 
+                                          seed=42, 
+                                          only_observed=only_observed)
+        
+        assert Y_train.shape == Y.shape
+        assert len(Y_val) == int(Y_train.size*val_size)
+        assert isinstance(Y_train, np.ndarray)
+        assert isinstance(Y_val, list)
+        
+        for (i, j, v) in Y_val:
+            assert Y[i, j] == v
+            assert Y_train[i, j] == 0
+        
+        if only_observed is True:
+            for (i, j, v) in Y_val:
+                assert v != 0
+        
+        
