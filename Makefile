@@ -9,6 +9,9 @@ RESULTS=results
 # Default target
 all: preprocess simulate analyze figures
 
+# skip processing
+no_process: simulate analyze figures
+
 # Step 1: Preprocess data
 preprocess:
 	$(PYTHON) $(SRC)/pipeline/load_data.py
