@@ -94,7 +94,12 @@ python src/analysis/book_analysis.py
 Note: this takes A LOT of time
 
 
-To run the whole analysis with one command run
+To run the whole analysis with one command run:
 ```bash
 make all
+```
+
+or to skip the processing step run
+```bash
+make no_process
 ```
