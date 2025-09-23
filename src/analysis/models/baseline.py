@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from scipy import sparse
 from scipy.stats import mode
@@ -681,8 +682,7 @@ class Baseline:
         return np.array(cov_nch)
     
     def gibbs_step(self):
-        """Performs a Gibbs sampling step.
-        """
+        """Performs a Gibbs sampling step."""
         # do nothing for baseline
         return
     
@@ -729,6 +729,8 @@ class Baseline:
             user_cluster_list: MCMC samples of user cluster assignments during training
             item_cluster_list: MCMC samples of item cluster assignments during training
         """
+        if not isinstance(n_iters, int) or n_iters <= 0:
+            raise ValueError('n_iters must be a positive integer')
         np.random.seed(self.seed)
         
         self.n_iters = n_iters
@@ -749,6 +751,7 @@ class Baseline:
         frequencies_users_list.append(self.frequencies_users.copy())
         frequencies_items_list.append(self.frequencies_items.copy())
         
+        check = time.time()
         for it in range(n_iters):
     
             self.gibbs_step()
@@ -763,6 +766,8 @@ class Baseline:
             if verbose >= 1:
                 if it % (n_iters // 10) == 0:
                     print(it, llks[it+1])
+                    print('time', time.time()-check)
+                    check = time.time()
                 if verbose >= 2:
                     print('user freq ', self.frequencies_users)
                     print('ite freq ', self.frequencies_items)
@@ -918,8 +923,6 @@ class Baseline:
         
         return cc_users, cc_items
     
-    
-    
     def point_predict(self, pairs, seed=None):
         """Predict ratings for user-item pairs.
 
@@ -935,6 +938,17 @@ class Baseline:
         preds : list
             List of predicted ratings corresponding to the input pairs.
         """
+        
+        if not isinstance(pairs, list):
+            raise TypeError('pairs must be a list of tuples')
+        for p in pairs:
+            if not isinstance(p, tuple) or len(p) != 2:
+                raise ValueError('each pair must be a tuple of (user, item)')
+            u, i = p
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+            if not (0 <= i < self.num_items):
+                raise ValueError(f'item index {i} out of bounds')
         
         if seed is None:
             np.random.seed(self.seed)
@@ -993,6 +1007,17 @@ class Baseline:
         list
             List of predicted item indices for each user.
         """
+        if not isinstance(users, (list, np.ndarray, int)):
+            raise TypeError('users must be a a user index or a list/array of user indices')
+        if not isinstance(users, (list, np.ndarray)):
+            users = [users]
+        for u in users:
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+        
+        if not isinstance(k, int) or k <= 0:
+            raise ValueError('k must be a positive integer')
+        
         out = []
         for u in users:
             # baseline: completely random

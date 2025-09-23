@@ -424,9 +424,8 @@ class Esbm(Baseline):
         self.frequencies_items = frequencies_items
         return
     
-    ############
-    # estimating theta from posterior comutations
-    def estimate_theta(self):
+    def _estimate_theta(self):
+        """estimates theta from posterior computations."""
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         
@@ -437,10 +436,36 @@ class Esbm(Baseline):
         self.estimated_theta = theta
         return theta
     
-    #########
-    # generate point prediction (rating value) for pairs of user-item
-    # (uses the theta value for user-item cluster)
     def point_predict(self, pairs, seed=None):
+        """Predict ratings for user-item pairs.
+        
+        This generates point predictions using the posterior mean of y_ui given
+        theta and user/cluster assignments.
+
+        Parameters
+        ----------
+        pairs : list of tuples
+            List of (user, item) pairs for which to predict ratings.
+        seed : int, optional
+            Random seed for reproducibility, by default None
+
+        Returns
+        -------
+        preds : list
+            List of predicted ratings corresponding to the input pairs.
+        """
+        
+        if not isinstance(pairs, list):
+            raise TypeError('pairs must be a list of tuples')
+        for p in pairs:
+            if not isinstance(p, tuple) or len(p) != 2:
+                raise ValueError('each pair must be a tuple of (user, item)')
+            u, i = p
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+            if not (0 <= i < self.num_items):
+                raise ValueError(f'item index {i} out of bounds')
+            
         if seed is None:
             np.random.seed(self.seed)
         elif seed == -1:
@@ -451,7 +476,7 @@ class Esbm(Baseline):
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         if self.estimated_theta is None:
-            self.estimate_theta()
+            self._estimate_theta()
         
         if not isinstance(pairs, list):
             pairs = [pairs]
@@ -466,15 +491,38 @@ class Esbm(Baseline):
 
         return preds
     
-    #############
-    # for a list of users returns items in cluster with highest score 
-    # (highest theta value)
     def predict_with_ranking(self, users):
+        """Predicts items for a list of users based on the highest cluster score.
+
+        Parameters
+        ----------
+        users : list, array-like, or int
+            List of user IDs or a single user ID for which to predict items.
+
+        Returns
+        -------
+        list
+            List of recommended item IDs for each user.
+
+        Raises
+        ------
+        Exception
+            If cluster assignment has not been estimated.
+        """
+        
+        if not isinstance(users, (list, np.ndarray, int)):
+            raise TypeError('users must be a a user index or a list/array of user indices')
+        if not isinstance(users, (list, np.ndarray)):
+            users = [users]
+        for u in users:
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+        
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         
         if self.estimated_theta is None:
-            self.estimate_theta()
+            self._estimate_theta()
         
         theta = self.estimated_theta
         
@@ -492,19 +540,13 @@ class Esbm(Baseline):
         self.predict_mode = 'ranking'
         return out
     
-    ###########
-    # return k recommended items for a list of users.
-    # mode parameter scpecifies how these are selected
-    # - 'random': random choice from cluster with highest score
-    # - 'popularity': selects the most popular items (i.e. most reviewed) 
-    #    in the cluster with highest score
     def predict_k(self, users, k=10, mode='random', seed=42):
         """Predict k items for each user.
 
         Parameters
         ----------
-        users : list or array-like
-            List of user IDs for which to predict items.
+       users : list, array-like, or int
+            List of user IDs or a single user ID for which to predict items.
         k : int, optional
             Number of items to predict for each user, by default 10
         mode : str, optional
@@ -525,12 +567,20 @@ class Esbm(Baseline):
         Exception
             If cluster assignment has not been estimated.
         """
+        if not isinstance(users, (list, np.ndarray, int)):
+            raise TypeError('users must be a a user index or a list/array of user indices')
+        if not isinstance(users, (list, np.ndarray)):
+            users = [users]
+        for u in users:
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+            
         np.random.seed(seed)
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         
         if self.estimated_theta is None:
-            self.estimate_theta()
+            self._estimate_theta()
         
         if mode == 'popularity':
             degree_items = self.Y.sum(axis=0)

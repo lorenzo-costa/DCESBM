@@ -198,6 +198,8 @@ class Dcesbm(Baseline):
         return ll
         
     def gibbs_step(self):
+        """Performs a Gibbs sampling step."""
+
         frequencies_users = self.frequencies_users
         frequencies_items = self.frequencies_items      
         degree_clusters_users = self.degree_clusters_users 
@@ -497,6 +499,26 @@ class Dcesbm(Baseline):
         return
     
     def gibbs_train(self, n_iters, verbose=0):
+        """Trains the model using Gibbs sampling.
+
+        Parameters
+        ----------
+        n_iters : int
+            Number of iterations for Gibbs sampling.
+        verbose : int, optional
+            Verbosity level, by default 0. 0: no output, 1: every 10% of iterations,
+            2: also print frequencies, 3: also print cluster assignments
+
+        Returns
+        -------
+        tuple: (llks, user_cluster_list, item_cluster_list)
+            llks: log-likelihood values during training
+            user_cluster_list: MCMC samples of user cluster assignments during training
+            item_cluster_list: MCMC samples of item cluster assignments during training
+        """
+        if not isinstance(n_iters, int) or n_iters <= 0:
+            raise ValueError('n_iters must be a positive integer')
+        
         np.random.seed(self.seed)
         
         self.n_iters = n_iters
@@ -563,7 +585,8 @@ class Dcesbm(Baseline):
         
         return llks, user_cluster_list, item_cluster_list
     
-    def estimate_phi(self):
+    def _estimate_phi(self):
+        """Estimates phi from posterior computations."""
         phi_users = np.zeros(shape=(self.num_clusters_users, self.num_users))
         for h in range(self.num_clusters_users):
             idx = np.where(self.user_clustering==h)
@@ -578,10 +601,11 @@ class Dcesbm(Baseline):
             
         self.estimated_phi_users = phi_users
         self.estimated_phi_items = phi_items
+        return phi_users, phi_items
     
-    ############
-    # estimating theta from posterior comutations
-    def estimate_theta(self):
+    def _estimate_theta(self):
+        """Estimates theta from posterior computations."""
+        
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         
@@ -593,6 +617,35 @@ class Dcesbm(Baseline):
         return theta
     
     def point_predict(self, pairs, seed=None):
+        """Predict ratings for user-item pairs.
+        
+        This generates point predictions using the posterior mean of y_ui given
+        theta, phi and user/cluster assignments.
+
+        Parameters
+        ----------
+        pairs : list of tuples or tuple
+            List of (user, item) tuples or a single (user, item) tuple.
+        seed : int, optional
+            Random seed for reproducibility, by default None
+
+        Returns
+        -------
+        preds : list
+            List of predicted ratings corresponding to the input pairs.
+        """
+        
+        if not isinstance(pairs, list):
+            raise TypeError('pairs must be a list of tuples')
+        for p in pairs:
+            if not isinstance(p, tuple) or len(p) != 2:
+                raise ValueError('each pair must be a tuple of (user, item)')
+            u, i = p
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+            if not (0 <= i < self.num_items):
+                raise ValueError(f'item index {i} out of bounds')
+            
         if seed is None:
             np.random.seed(self.seed)
         elif seed == -1:
@@ -603,9 +656,9 @@ class Dcesbm(Baseline):
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         if self.estimated_theta is None:
-            self.estimate_theta()
+            self._estimate_theta()
         if self.estimated_phi_users is None or self.estimated_phi_items is None:
-            self.estimate_phi()
+            self._estimate_phi()
             
         if not isinstance(pairs, list):
             pairs = [pairs]
@@ -623,6 +676,31 @@ class Dcesbm(Baseline):
         return preds
         
     def predict_k(self, users, k=10, seed=42, ignore_seen=True):
+        """Predict k items for each user based on cluster with highest score.
+
+        Parameters
+        ----------
+        users : list, array-like, or int
+            List of users for whom to predict items or a single user ID.
+        k : int
+            Number of items to predict for each user.
+
+        Returns
+        -------
+        list
+            List of predicted item indices for each user.
+        """
+        if not isinstance(users, (list, np.ndarray, int)):
+            raise TypeError('users must be a a user index or a list/array of user indices')
+        if not isinstance(users, (list, np.ndarray)):
+            users = [users]
+        for u in users:
+            if not (0 <= u < self.num_users):
+                raise ValueError(f'user index {u} out of bounds')
+        
+        if not isinstance(k, int) or k <= 0:
+            raise ValueError('k must be a positive integer')
+            
         if seed is None:
             np.random.seed(self.seed)
         elif seed == -1:
@@ -633,9 +711,9 @@ class Dcesbm(Baseline):
         if self.estimated_users is None or self.estimated_items is None:
             raise Exception('cluster assignment must be estimated first')
         if self.estimated_theta is None:
-            self.estimate_theta()
+            self._estimate_theta()
         if self.estimated_phi_users is None or self.estimated_phi_items is None:
-            self.estimate_phi()
+            self._estimate_phi()
             
         theta = self.estimated_theta
         out = []
