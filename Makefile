@@ -11,7 +11,7 @@ all: preprocess simulate analyze figures
 
 # Step 1: Preprocess data
 preprocess:
-	$(PYTHON) $(SRC)/pipeline/pre_processing_functs.py
+	$(PYTHON) $(SRC)/pipeline/load_data.py
 
 # Step 2: Run simulations
 simulate:
