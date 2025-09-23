@@ -227,6 +227,9 @@ precision_dcesbm_gn_cov = dcesbm_gn_cov.precision
 recall_dcesbm_gn_cov = dcesbm_gn_cov.recall
 
 output_table = pd.DataFrame()
+output_table['Model'] = ['esbm_DP', 'esbm_PY', 'esbm_GN', 'esbm_DP_COV', 'esbm_PY_COV', 'esbm_GN_COV',
+                        'dcesbm_DP', 'dcesbm_PY', 'dcesbm_GN', 'dcesbm_DP_COV', 'dcesbm_PY_COV', 'dcesbm_GN_COV']
+
 output_table['MAE'] = [mae_esbm_dp, mae_esbm_py, mae_esbm_gn, 
                        mae_esbm_dp_cov, mae_esbm_py_cov, mae_esbm_gn_cov, 
                        mae_dcesbm_dp, mae_dcesbm_py, mae_dcesbm_gn, 
