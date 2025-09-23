@@ -15,7 +15,12 @@ works_DIR = 'data/raw/goodreads_book_works.json.gz'
 
 # pick only the most read 1k books and most active 1k users
 subset_size = 1000
-out_users, out_books = process_data(interactions_DIR, stop=1e8, step = 1e6)
+
+print('extracting interactions')
+try:
+    out_users, out_books = process_data(interactions_DIR, stop=1e8, step = 1e6)
+except FileNotFoundError:
+    raise FileNotFoundError("Please download the dataset and place it in data/raw")
 
 # merge counters for each batch
 out_users_cum = Counter()
@@ -41,17 +46,21 @@ top_books = dict(out_books_cum.most_common(subset_size))
 top_users_id = list(top_users.keys())
 top_books_id = list(top_books.keys())
 
+print('extracting ratings')
 # extract ratings for the selected users and books
 selected_ratings, selected_uids, selected_bids = find_relevant_ratings(interactions_DIR, top_users_id, top_books_id, start=0, stop=1e8, step=1e6)
 
+print('extracting book info')
 # extract book information for the selected books
 out, out_book_id, out_description, out_work_id = process_books(books_DIR, top_books_id, start=0, stop=1e8, step=1e6)
 
+print('extracting work info')
 # create mapping from work_id to title and best_book_id
 work_data = load_data(works_DIR, start=0, end=1e8)
 work_id_title = {x['work_id']:x['original_title'] for x in work_data}
 work_id_best_book_id = {x['work_id']:x['best_book_id'] for x in work_data}
 
+print('scraping for book genres')
 # extract genres for the selected books
 genres = find_genres_parallel(out, max_workers=20)
 
