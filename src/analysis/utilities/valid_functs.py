@@ -17,7 +17,6 @@ def validate_models(Y_train,
                     true_users=None, 
                     true_items=None, 
                     k=10,
-                    print_intermid=False,
                     seed=42):    
     """Fits a list of models on training data and validates them using a validation dataset.
     
@@ -59,8 +58,6 @@ def validate_models(Y_train,
         True user cluster assignments for VI computation (default is None).
     true_items : array-like, optional
         True item cluster assignments for VI computation (default is None).
-    print_intermid : bool, optional
-        If True, prints intermediate results for each model (default is False).
     verbose : int, optional
         Verbosity level for gibbs training routine (default is 0).
     
@@ -111,7 +108,7 @@ def validate_models(Y_train,
 
         if verbose>0:
             print('Starting training for model', name)
-        _ = model.gibbs_train(n_iters, verbose=verbose)
+        _ = model.gibbs_train(n_iters, verbose=verbose-1)
         _ = model.estimate_cluster_assignment_vi(burn_in=burn_in, thinning=thinning)
 
         if verbose>0:
@@ -157,10 +154,10 @@ def validate_models(Y_train,
         model.mae = mae_model
         model.mse = mse_model
         
-        if print_intermid is True:
-            print(f'Model: {name}', name)
+        if verbose>0:
+            print(f'\nModel: {name}', name)
             print(f'MAE: {np.round(mae_model, 4)}, MSE: {np.round(mse_model, 4)}')
-            print(f'Precision: {np.round(precision_model, 4)}, Recall: {np.round(recall_model, 4)}')
+            print(f'Precision @ {k}: {np.round(precision_model, 4)}, Recall @ {k}: {np.round(recall_model, 4)}')
             if true_users is not None:
                 print(f'VI users: {np.round(vi_users_model, 4)}')
             if true_items is not None:
@@ -227,7 +224,6 @@ def multiple_runs(true_mod,
                   cov_places_items=None, 
                   cov_places_users=None,
                   k = 10, 
-                  print_intermid=True, 
                   verbose=1, 
                   burn_in=0, 
                   thinning=1, 
@@ -276,8 +272,6 @@ def multiple_runs(true_mod,
         Indices in `params_list` to update user covariates.
     k : int, optional
         Number of top items to consider for precision@k/recall@k metrics (default is 10).
-    print_intermid : bool, optional
-        Whether to print intermediate results. (default is True).
     verbose : int, optional
         Verbosity level for model validation. (default is 1).
     burn_in : int, optional
@@ -365,8 +359,7 @@ def multiple_runs(true_mod,
                               thinning=thinning, 
                               model_names=model_names, 
                               true_users=true_users, 
-                              true_items=true_items, 
-                              print_intermid=print_intermid)
+                              true_items=true_items)
         
         for m in range(len(out)):
             names_list.append(model_names[m])

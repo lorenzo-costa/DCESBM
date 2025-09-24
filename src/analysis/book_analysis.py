@@ -8,8 +8,9 @@ from models.dc_esbm_rec import Dcesbm
 from utilities.valid_functs import validate_models, generate_val_set
 import seaborn as sns
 import yaml
+from src.analysis.utilities.valid_functs import generate_val_set
 
-###########################
+
 # load dataset
 print('\n\nLoading dataset...')
 dataset_clean = pd.read_csv('data/processed/dataset_clean.csv')
@@ -34,9 +35,8 @@ thinning = config["general_params"]["thinning"]
 k = config["general_params"]["k"]
 seed = config["general_params"]["seed"]
 
-###########################
+
 # data preparation
-###########################
 print('\n\nPreparing data...')
 # Create user-item matrix and take subset
 matrix_form = dataset_clean.pivot_table(index='user_id', columns='book_id', values='rating', fill_value=0).astype(int)
@@ -49,7 +49,7 @@ sns.heatmap(matrix_small, ax=ax)
 ax.set_xlabel('Books')
 ax.set_ylabel('Users')
 plt.tight_layout()
-plt.savefig('results/figures/books/llk_simulations.png')
+plt.savefig('results/figures/books/user-book_heatmap.png')
 
 # Create user covariates
 cov_biography = dataset_clean['biography'].values[np.flip(np.argsort(matrix_form.sum(axis=1)))[:n_users]]
@@ -67,9 +67,8 @@ cov_items = [
 # train-test split
 Y_train, y_val = generate_val_set(matrix_small, size=0.2, seed=42, only_observed=False)
 
-########################
+
 # training
-##########################
 # define models
 model_list = [Esbm, Esbm, Esbm, Esbm, Esbm, Esbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm, Dcesbm]
 params_list = [params_dp, params_py, params_gn, params_dp_cov, params_py_cov, params_gn_cov, params_dp, params_py, params_gn, params_dp_cov, params_py_cov, params_gn_cov]  
@@ -87,13 +86,11 @@ out_models = validate_models(Y_train,
                              verbose=1, 
                              thinning=thinning, 
                              model_names=model_names, 
-                             print_intermid=True,
                              seed=seed)
 
 print('\n\nModel validation completed! Saving results...')
-#################################
+
 # extract models
-##################################
 esbm_dp = out_models[0]
 esbm_py = out_models[1]
 esbm_gn = out_models[2]
@@ -120,9 +117,8 @@ llk_dcesbm_dp_cov = dcesbm_dp_cov.train_llk
 llk_dcesbm_py_cov = dcesbm_py_cov.train_llk
 llk_dcesbm_gn_cov = dcesbm_gn_cov.train_llk
 
-##################################
+
 # plot and save llk plot
-###################################
 fig1, ax1 = plt.subplots(figsize=(10, 6))
 ax1.plot(llk_esbm_dp, label='esbm_DP')
 ax1.plot(llk_esbm_py, label='esbm_PY')
@@ -167,9 +163,8 @@ plt.ylabel('Log-likelihood')
 plt.tight_layout()
 plt.savefig('results/figures/books/llk_dcesbm_cov.png')
 
-######################################
+
 # extract and save val metrics
-########################################
 mae_esbm_dp = esbm_dp.mae
 mse_esbm_dp = esbm_dp.mse
 precision_esbm_dp = esbm_dp.precision
