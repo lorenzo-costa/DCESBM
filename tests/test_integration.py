@@ -63,8 +63,6 @@ class TestIntegration:
             'params_init': self.run_params_init,
             'num_users': n_users_runs,
             'num_items': n_items_runs,
-            'num_clusters_users': num_clusters_users_runs,
-            'num_clusters_items': num_clusters_items_runs,
             'n_runs': 1,
             'n_iters': 1500,
             'burn_in': 250,

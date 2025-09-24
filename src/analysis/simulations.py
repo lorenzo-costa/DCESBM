@@ -13,8 +13,6 @@ with open("src/analysis/config_sim.yaml", "r") as f:
 
 n_users = config["general_params"]["num_users"]
 n_items = config["general_params"]["num_items"]
-# num_clusters_users = config["general_params"]["bar_h_users"]
-# num_clusters_items = config["general_params"]["bar_h_items"]
 n_iters = config["run_settings"]["num_iters"]
 burn_in = config["run_settings"]["burn_in"]
 thinning = config["run_settings"]["thinning"]
@@ -47,7 +45,7 @@ model_names = ['dc_DP', 'dc_PY', 'dc_GN',
                'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
 
 # run simulations 
-print('Starting simulations with', n_runs, 'runs of', n_iters, 'iterations each.')
+print('\nStarting simulations with', n_runs, 'runs of', n_iters, 'iterations each.')
 
 out = multiple_runs(true_mod=Dcesbm, 
                     params_init=params_init, 

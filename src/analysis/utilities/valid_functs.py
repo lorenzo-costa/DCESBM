@@ -159,12 +159,12 @@ def validate_models(Y_train,
         
         if print_intermid is True:
             print(f'Model: {name}', name)
-            print(f'MAE: {np.round(mae_model)}, MSE: {np.round(mse_model)}')
-            print(f'Precision: {np.round(precision_model)}, Recall: {np.round(recall_model)}')
+            print(f'MAE: {np.round(mae_model, 4)}, MSE: {np.round(mse_model, 4)}')
+            print(f'Precision: {np.round(precision_model, 4)}, Recall: {np.round(recall_model, 4)}')
             if true_users is not None:
-                print(f'VI users: {np.round(vi_users_model)}')
+                print(f'VI users: {np.round(vi_users_model, 4)}')
             if true_items is not None:
-                print(f'VI items: {np.round(vi_items_model)}')
+                print(f'VI items: {np.round(vi_items_model, 4)}')
 
         model_list_out.append(model)
         

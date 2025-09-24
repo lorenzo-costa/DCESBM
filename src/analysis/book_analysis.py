@@ -11,6 +11,7 @@ import yaml
 
 ###########################
 # load dataset
+print('\n\nLoading dataset...')
 dataset_clean = pd.read_csv('data/processed/dataset_clean.csv')
 
 # load settings
@@ -36,6 +37,7 @@ seed = config["general_params"]["seed"]
 ###########################
 # data preparation
 ###########################
+print('\n\nPreparing data...')
 # Create user-item matrix and take subset
 matrix_form = dataset_clean.pivot_table(index='user_id', columns='book_id', values='rating', fill_value=0).astype(int)
 matrix_form = matrix_form.to_numpy()
@@ -74,6 +76,7 @@ params_list = [params_dp, params_py, params_gn, params_dp_cov, params_py_cov, pa
 model_names = ['esbm_DP', 'esbm_PY', 'esbm_GN', 'esbm_DP_COV', 'esbm_PY_COV', 'esbm_GN_COV', 'dcesbm_DP', 'dcesbm_PY', 'dcesbm_GN', 'dcesbm_DP_COV', 'dcesbm_PY_COV', 'dcesbm_GN_COV']
 
 # Validate models
+print('\n\nStarting model validation...')
 out_models = validate_models(Y_train, 
                              y_val, 
                              model_list, 
@@ -87,6 +90,7 @@ out_models = validate_models(Y_train,
                              print_intermid=True,
                              seed=seed)
 
+print('\n\nModel validation completed! Saving results...')
 #################################
 # extract models
 ##################################
