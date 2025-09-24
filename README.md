@@ -79,7 +79,7 @@ Note:
 
 Alternatively you can dowload the data using
 ```bash
-gdown 'https://drive.google.com/uc?id=1AaZomR9mWmkn6FP4KxtM86PdKuQjZ-zl' -O data/processed/dataset_clean.csv
+gdown 'https://drive.google.com/uc?id=1h7UdSq9_WEj9k7HD-pOOeXtro5xXmKXZ' -O data/processed/dataset_clean.csv
 ```
 
 2. Run simulations. This populates the folder results with figures and tables from simulations
@@ -102,4 +102,9 @@ make all
 or to skip the processing step run
 ```bash
 make no_process
+```
+
+or to run a smaller version of the analysis
+```bash
+make small
 ```
