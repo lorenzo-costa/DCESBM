@@ -12,6 +12,10 @@ all: preprocess simulate analyze figures
 # skip processing
 no_process: simulate analyze figures
 
+# small simulations
+small: 
+	$(PYTHON) $(SRC)/analysis/small_analysis.py
+
 # Step 1: Preprocess data
 preprocess:
 	$(PYTHON) $(SRC)/pipeline/load_data.py
