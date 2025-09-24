@@ -318,7 +318,8 @@ class Baseline:
             
         # if adjancecy matrix not given generate it
         if Y is None:
-            print('randomly initialising data')
+            if verbose_items or verbose_users:
+                print('randomly initialising data')
             self.generate_data()
         else:
             self.Y = Y
