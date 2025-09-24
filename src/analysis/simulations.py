@@ -47,6 +47,8 @@ model_names = ['dc_DP', 'dc_PY', 'dc_GN',
                'esbm_DP_cov', 'esbm_PY_cov', 'esbm_GN_cov']
 
 # run simulations 
+print('Starting simulations with', n_runs, 'runs of', n_iters, 'iterations each.')
+
 out = multiple_runs(true_mod=Dcesbm, 
                     params_init=params_init, 
                     num_users=n_users, 
@@ -65,6 +67,7 @@ out = multiple_runs(true_mod=Dcesbm,
                     thinning=thinning, 
                     seed=seed) 
 
+print('Simulations completed! Saving results...')
 # extract and save results
 names_list=out[0]
 mse_list=out[1]

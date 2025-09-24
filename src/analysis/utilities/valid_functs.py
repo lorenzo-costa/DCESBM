@@ -158,15 +158,14 @@ def validate_models(Y_train,
         model.mse = mse_model
         
         if print_intermid is True:
-            print('MAE:', mae_model)
-            print('MSE:', mse_model)
-            print('Precision:', precision_model)
-            print('Recall:', recall_model)
+            print(f'Model: {name}', name)
+            print(f'MAE: {np.round(mae_model)}, MSE: {np.round(mse_model)}')
+            print(f'Precision: {np.round(precision_model)}, Recall: {np.round(recall_model)}')
             if true_users is not None:
-                print('VI users:', vi_users_model)
+                print(f'VI users: {np.round(vi_users_model)}')
             if true_items is not None:
-                print('VI items:', vi_items_model)
-        
+                print(f'VI items: {np.round(vi_items_model)}')
+
         model_list_out.append(model)
         
     return model_list_out
@@ -327,6 +326,9 @@ def multiple_runs(true_mod,
         params_init['cov_items'] = None
     
     for r in range(n_runs):
+        if verbose > 0:
+            print('\n\nRun', r+1, 'out of', n_runs)
+            
         np.random.seed(seed+r)
 
         true_model = true_mod(**params_init)
@@ -359,7 +361,7 @@ def multiple_runs(true_mod,
                               n_iters=n_iters, 
                               burn_in=burn_in, 
                               k = k, 
-                              verbose=verbose, 
+                              verbose=verbose-1, 
                               thinning=thinning, 
                               model_names=model_names, 
                               true_users=true_users, 
